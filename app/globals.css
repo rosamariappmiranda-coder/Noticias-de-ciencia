@@ -84,3 +84,180 @@ body {
     transition: none;
   }
 }
+
+/* ==================================================================
+ * Etapa "Centro de Comando" — cromo de HUD (painel de controle) do
+ * feed. Tudo aqui embaixo serve pra fazer o feed parecer um console
+ * de telemetria de missão espacial, não um blog. Ver
+ * docs/ETAPA-HUD-SPEC-AGENTE.md pra entender a intenção de cada peça.
+ * ================================================================== */
+
+/* Pulso do "sinal ativo" (o ● do bloco FEED/ALT/SINAL e do status do
+   Hero): pisca devagar entre opaco e quase apagado, como uma luz de
+   painel indicando "tudo funcionando". */
+@keyframes pulso {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.pulso-sinal {
+  animation: pulso 2s ease-in-out infinite;
+}
+
+/* Ken Burns na foto de fundo de cada notícia -----------------------
+   "Ken Burns" é o nome clássico (de um documentarista) pra esse efeito
+   de zoom bem lento numa foto parada — dá a sensação de câmera viva
+   em vez de imagem estática. A imagem começa 8% maior (scale 1.08) e
+   relaxa até o tamanho normal (scale 1) ao longo de 6 segundos,
+   somente enquanto o slide dela está ativo. */
+.midia-reel {
+  transform: scale(1.08);
+  transition: transform 6s ease-out;
+}
+
+[data-ativo="true"] .midia-reel {
+  transform: scale(1);
+}
+
+/* Entrada em cascata dos blocos de texto ---------------------------
+   Cada "linha" de conteúdo de um slide (régua, categoria, manchete,
+   resumo, rodapé...) recebe a classe `.linha-reel`. Sozinha, ela só
+   define o estado ESCONDIDO (invisível, um pouco abaixo) e a
+   transição; quem manda ela aparecer é o `[data-ativo="true"]` do
+   `<div>` do slide (aplicado pelo ReelsFeed via IntersectionObserver).
+   As regras de `:nth-child` logo abaixo dão um atraso (delay) cada
+   vez maior conforme a posição da linha entre os irmãos dela — é isso
+   que faz elas entrarem uma de cada vez (80ms de diferença), em vez
+   de tudo pipocar junto. */
+.linha-reel {
+  opacity: 0;
+  transform: translateY(1rem);
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s ease-out;
+}
+
+[data-ativo="true"] .linha-reel {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Quando o slide desativa (a pessoa rola pra outro), o seletor acima
+   deixa de bater e a regra "escondido" do `.linha-reel` volta a valer
+   sozinha — é assim que a cascata reanima do zero na próxima vez que
+   a pessoa voltar pra este slide. */
+
+.linha-reel:nth-child(1) {
+  transition-delay: 0ms;
+}
+.linha-reel:nth-child(2) {
+  transition-delay: 80ms;
+}
+.linha-reel:nth-child(3) {
+  transition-delay: 160ms;
+}
+.linha-reel:nth-child(4) {
+  transition-delay: 240ms;
+}
+.linha-reel:nth-child(5) {
+  transition-delay: 320ms;
+}
+.linha-reel:nth-child(6) {
+  transition-delay: 400ms;
+}
+
+/* Manchete: revelação "por recorte" ---------------------------------
+   Além do fade + subida que já vem de `.linha-reel`, a manchete ganha
+   um segundo efeito: um `clip-path` que começa cobrindo 100% da
+   altura do texto (como uma cortina fechada) e recolhe até 0% — a
+   letra vai sendo "revelada" de cima pra baixo, tipo uma legenda de
+   noticiário entrando na tela. Como aqui redeclaramos `transition`
+   inteira (com as 3 propriedades juntas), esta regra some por cima da
+   transição genérica do `.linha-reel` — sem conflito, os dois
+   `[data-ativo="true"]` continuam definindo estados finais
+   diferentes (opacidade/posição vêm de `.linha-reel`, o corte vem
+   daqui). */
+.manchete-reel {
+  clip-path: inset(0 0 100% 0);
+  transition:
+    clip-path 0.8s ease-out,
+    opacity 0.6s ease-out,
+    transform 0.6s ease-out;
+}
+
+[data-ativo="true"] .manchete-reel {
+  clip-path: inset(0 0 0% 0);
+}
+
+/* Linha-régua ------------------------------------------------------
+   Um traço fino que "cresce" da esquerda pra direita quando o slide
+   fica ativo — usa `scaleX` (mais leve pro navegador do que animar a
+   largura de verdade) com `transform-origin: left` pra crescer a
+   partir do início, não do centro. Usada acima da categoria de cada
+   notícia e acima do título do Hero. */
+.regua-reel {
+  width: 56px;
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 0.7s ease-out;
+}
+
+[data-ativo="true"] .regua-reel {
+  transform: scaleX(1);
+}
+
+/* Número fantasma ----------------------------------------------------
+   O algarismo gigante "vazado" atrás do texto de cada notícia — só o
+   contorno das letras aparece (`-webkit-text-stroke`), o miolo fica
+   transparente. Nem todo navegador suporta essa propriedade (é
+   WebKit/Chromium só), então definimos primeiro uma cor de
+   fallback bem apagada — quem não suporta `text-stroke` ainda vê o
+   número, só que sólido e bem sutil, sem o efeito de contorno. */
+.numero-fantasma {
+  color: rgba(255, 255, 255, 0.04);
+}
+
+@supports (-webkit-text-stroke: 1px black) {
+  .numero-fantasma {
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.07);
+  }
+}
+
+/* Reduced motion — cobre TUDO que foi adicionado nesta etapa --------
+   Quem pede "reduzir movimento" no sistema operacional não deve ver
+   zoom, cascata, recorte de manchete, régua crescendo nem o ● piscando
+   — tudo aparece pronto e parado desde o primeiro instante. */
+@media (prefers-reduced-motion: reduce) {
+  .midia-reel {
+    transform: none;
+    transition: none;
+  }
+
+  .linha-reel {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    transition-delay: 0ms;
+  }
+
+  .manchete-reel {
+    clip-path: none;
+    transition: none;
+  }
+
+  .regua-reel {
+    transform: scaleX(1);
+    transition: none;
+  }
+
+  .pulso-sinal {
+    animation: none;
+    opacity: 1;
+  }
+}

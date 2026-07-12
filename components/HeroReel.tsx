@@ -23,10 +23,34 @@
  * só começa a tocar depois que TODOS os 123 quadros já estão na
  * memória — assim a animação nunca "engasga" esperando uma foto
  * chegar da internet no meio da reprodução.
+ *
+ * Etapa "Centro de Comando": além de desenhar os quadros, o
+ * componente agora também acompanha a "fase da missão" (um
+ * `useState` simples) e mostra isso em texto acima do título —
+ * "PRONTO PARA LANÇAMENTO" antes de tocar, "IGNIÇÃO" assim que a
+ * sequência começa a rodar, "TORRE LIVRE — BOA VIAGEM" quando ela
+ * termina e congela no último quadro. Não mexemos em NADA da lógica
+ * de canvas/desenho — só chamamos `setFaseMissao(...)` nos mesmos
+ * pontos onde o código já decidia "vou começar a tocar" ou "acabei de
+ * terminar".
  * ---------------------------------------------------------------
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
+// As três fases da "missão" do Hero, na ordem em que acontecem.
+// Guardamos como um tipo (union de strings) em vez de números soltos
+// pra ficar óbvio, em qualquer lugar do código, o que cada valor
+// significa.
+type FaseMissao = "pronto" | "ignicao" | "livre";
+
+// Texto exibido pra cada fase — fica num objeto separado (em vez de
+// um monte de `if` no JSX) pra ser fácil de ler e de trocar depois.
+const TEXTO_DA_FASE: Record<FaseMissao, string> = {
+  pronto: "Pronto para lançamento",
+  ignicao: "Ignição",
+  livre: "Torre livre — boa viagem",
+};
 
 // Mesmo total de fotogramas de LaunchFrames.tsx: public/rocket-frames/
 // tem frame-0001.webp até frame-0123.webp.
@@ -59,6 +83,12 @@ function limitar(valor: number, min: number, max: number) {
 
 export default function HeroReel() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Fase atual da missão, exibida no texto de status acima do
+  // título. Começa em "pronto" (ainda ninguém apertou o botão de
+  // ignição, por assim dizer) — o próprio efeito abaixo decide quando
+  // avançar pra "ignicao" e depois "livre".
+  const [faseMissao, setFaseMissao] = useState<FaseMissao>("pronto");
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -214,11 +244,17 @@ export default function HeroReel() {
           idAnimacaoAtual = requestAnimationFrame(passo);
         } else {
           // Chegou no último quadro: fica parado ali (congelado),
-          // sem agendar mais nenhum frame de animação.
+          // sem agendar mais nenhum frame de animação. É também o
+          // momento certo de avisar a fase "TORRE LIVRE — BOA VIAGEM"
+          // (a ignição terminou e o foguete já subiu).
           idAnimacaoAtual = null;
+          if (!cancelado) setFaseMissao("livre");
         }
       }
 
+      // A sequência está prestes a começar a rodar de verdade: avisa
+      // a fase "IGNIÇÃO" antes do primeiro `requestAnimationFrame`.
+      if (!cancelado) setFaseMissao("ignicao");
       idAnimacaoAtual = requestAnimationFrame(passo);
     }
 
@@ -229,9 +265,14 @@ export default function HeroReel() {
     if (reduzMovimento) {
       // Quem pediu "reduzir movimento": sem playback nenhum — carrega
       // só o ÚLTIMO quadro (o foguete já com o motor aceso) e o
-      // desenha direto, sem passar pelos 122 anteriores.
+      // desenha direto, sem passar pelos 122 anteriores. A fase da
+      // missão já nasce na última etapa também, sem passar por
+      // "pronto" nem "ignição".
       carregarImagem(TOTAL_DE_FRAMES - 1).then(() => {
-        if (!cancelado) desenharFrame(TOTAL_DE_FRAMES - 1);
+        if (!cancelado) {
+          desenharFrame(TOTAL_DE_FRAMES - 1);
+          setFaseMissao("livre");
+        }
       });
     } else {
       // 2) Desenha o pôster (primeiro quadro) assim que ele chegar,
@@ -282,11 +323,36 @@ export default function HeroReel() {
           animação de entrada com fade + subida quando o slide fica
           ativo. */}
       <div className="conteudo-reel pointer-events-none absolute inset-x-0 bottom-[14%] px-6 text-center">
-        <h1 className="font-display text-3xl font-bold tracking-wide text-[var(--text)] drop-shadow-lg md:text-6xl">
+        {/* Status de telemetria: o ● só pisca (`.pulso-sinal`) depois
+            que a ignição de fato começa — enquanto ainda está
+            "pronto para lançamento", ele fica firme, parado, como um
+            painel esperando o comando. */}
+        <p
+          aria-hidden="true"
+          className="font-telemetry mb-3 flex items-center justify-center gap-2 text-[11px] tracking-[0.3em] text-[var(--text-dim)] uppercase"
+        >
+          <span
+            className={`inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)] ${
+              faseMissao !== "pronto" ? "pulso-sinal" : ""
+            }`}
+          />
+          {TEXTO_DA_FASE[faseMissao]}
+        </p>
+
+        {/* Régua de 56px — mesma classe usada acima da categoria em
+            NewsReel.tsx, aqui centralizada acima do título pra manter
+            a mesma "assinatura visual" de instrumento em todo o
+            feed. */}
+        <div
+          aria-hidden="true"
+          className="regua-reel mx-auto mb-4 h-px bg-[var(--accent)]"
+        />
+
+        <h1 className="font-display text-3xl font-bold tracking-[0.08em] text-[var(--text)] uppercase drop-shadow-lg md:text-6xl">
           Notícias das Estrelas
         </h1>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--text-dim)] drop-shadow-lg md:text-base">
-          Ciência, espaço e tecnologia — direto da fonte, sem enrolação.
+        <p className="font-telemetry mx-auto mt-3 max-w-md text-xs tracking-[0.2em] text-[var(--text-dim)] uppercase drop-shadow-lg md:text-sm">
+          Ciência · Espaço · Tecnologia — sem enrolação
         </p>
       </div>
     </>
