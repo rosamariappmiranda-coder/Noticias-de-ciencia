@@ -1,9 +1,14 @@
 import StarField from "@/components/StarField";
 import CountdownIntro from "@/components/CountdownIntro";
-import LaunchFrames from "@/components/LaunchFrames";
-import PortalIntro from "@/components/PortalIntro";
-import NewsFeed from "@/components/NewsFeed";
+import ReelsFeed from "@/components/ReelsFeed";
 
+// Etapa "Feed Reels" (12/07/2026): o site pivotou de "blog com
+// scrollytelling" pra "feed vertical estilo TikTok/Reels" — cada
+// notícia ocupa a tela inteira e um gesto de rolagem encaixa
+// exatamente na próxima. LaunchFrames, PortalIntro e NewsFeed saíram
+// desta página (o ReelsFeed já contém tudo: o hero do foguete e um
+// slide por notícia), mas os ARQUIVOS continuam no repositório —
+// deleção só acontece com confirmação explícita da Rosa.
 export default function Home() {
   return (
     <>
@@ -15,19 +20,11 @@ export default function Home() {
           scrollar desde o primeiro instante. Some sozinha ao zerar. */}
       <CountdownIntro />
 
-      <main className="relative">
-        <LaunchFrames />
-
-        {/* Ancoragem: poucas frases apresentando o portal, logo
-            depois do impacto visual do hero. */}
-        <PortalIntro />
-
-        {/* Feed scrollytelling: os cards de notícia (por enquanto,
-            12 mocks realistas em content/noticias.ts) entram
-            deslizando conforme a rolagem, como um feed de rede
-            social com identidade própria. */}
-        <NewsFeed />
-      </main>
+      {/* O feed inteiro: slide 0 é a ignição do foguete (HeroReel),
+          seguido de um slide em tela cheia por notícia (NewsReel). É
+          este componente que agora controla o scroll da página
+          inteira (ver `overflow: hidden` no body, em globals.css). */}
+      <ReelsFeed />
     </>
   );
 }

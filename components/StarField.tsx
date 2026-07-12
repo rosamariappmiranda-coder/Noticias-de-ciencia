@@ -229,8 +229,19 @@ export default function StarField() {
     // que é o "momento certo" pro navegador redesenhar sem travar
     // a rolagem. "passive: true" avisa o navegador que este listener
     // não vai bloquear o scroll, deixando tudo mais fluido.
-    function aoRolar() {
-      scrollYRef.current = window.scrollY;
+    // Desde o layout "feed de reels", quem rola NÃO é mais a janela:
+    // é o contêiner do ReelsFeed (um <div> com overflow próprio).
+    // Eventos de scroll não "sobem" pela árvore (não fazem bubble),
+    // mas dá pra pegá-los na fase de CAPTURA (capture: true), que
+    // desce da janela até o elemento — assim este listener funciona
+    // pra QUALQUER coisa que rolar na página, seja o body ou o feed.
+    function aoRolar(evento: Event) {
+      // Se quem rolou foi um elemento (o feed), usamos o scrollTop
+      // dele; senão, caímos no scroll da janela (compatibilidade).
+      scrollYRef.current =
+        evento.target instanceof HTMLElement
+          ? evento.target.scrollTop
+          : window.scrollY;
       if (!tickingRef.current) {
         tickingRef.current = true;
         requestAnimationFrame(() => {
@@ -242,7 +253,10 @@ export default function StarField() {
 
     ajustarTamanho();
     window.addEventListener("resize", ajustarTamanho);
-    window.addEventListener("scroll", aoRolar, { passive: true });
+    window.addEventListener("scroll", aoRolar, {
+      passive: true,
+      capture: true,
+    });
     agendarProximaCadente();
 
     // Limpeza completa: remove os dois listeners e cancela qualquer
@@ -251,7 +265,10 @@ export default function StarField() {
     // plano.
     return () => {
       window.removeEventListener("resize", ajustarTamanho);
-      window.removeEventListener("scroll", aoRolar);
+      // capture: true também aqui — remover um listener exige as
+      // MESMAS opções usadas na hora de adicionar, senão o navegador
+      // não o encontra e ele continuaria vivo.
+      window.removeEventListener("scroll", aoRolar, { capture: true });
       if (cadenteTimeoutIdRef.current !== null) {
         window.clearTimeout(cadenteTimeoutIdRef.current);
       }

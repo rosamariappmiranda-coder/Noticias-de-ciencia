@@ -31,6 +31,15 @@ body {
   /* Sora é a fonte padrão do corpo do site (--font-body vem do
      next/font, configurado em app/layout.tsx). */
   font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+
+  /* Etapa "Feed Reels": quem rola a página agora é o `<div>` do
+     ReelsFeed (components/ReelsFeed.tsx), não mais o body inteiro —
+     ele é "fixed inset-0" e tem seu próprio scroll interno com
+     scroll-snap. Sem isso aqui, o body ainda tentaria rolar por
+     baixo do feed (um scroll "vazando" por trás do outro, dando uma
+     sensação de rolagem dupla e confusa). */
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* Classes utilitárias de fonte -----------------------------------
@@ -42,4 +51,36 @@ body {
 
 .font-telemetry {
   font-family: var(--font-mono), monospace;
+}
+
+/* Animação de entrada do texto nos slides do feed (ReelsFeed) ----
+   Cada slide (o <div> "h-dvh w-full snap-start" criado em
+   ReelsFeed.tsx) ganha o atributo `data-ativo="true"` quando fica
+   visível na tela (via IntersectionObserver). O bloco de texto
+   dentro dele — classe `.conteudo-reel`, usada em NewsReel.tsx e
+   HeroReel.tsx — começa "invisível e um pouco abaixo" e sobe/aparece
+   suavemente assim que o slide vira o ativo. É só CSS: nenhum
+   JavaScript recalcula essa animação a cada notícia. */
+.conteudo-reel {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition:
+    opacity 0.7s ease-out,
+    transform 0.7s ease-out;
+}
+
+[data-ativo="true"] .conteudo-reel {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Quem pediu "reduzir movimento" no sistema operacional não deve ver
+   nenhum fade/deslocamento: o texto de cada slide já aparece pronto,
+   sem animação de entrada. */
+@media (prefers-reduced-motion: reduce) {
+  .conteudo-reel {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }

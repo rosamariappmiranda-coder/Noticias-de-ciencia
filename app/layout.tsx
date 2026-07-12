@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import { Chakra_Petch, Sora, IBM_Plex_Mono } from "next/font/google";
-import SmoothScrollProvider from "@/components/SmoothScrollProvider";
 import GrainOverlay from "@/components/GrainOverlay";
 import "./globals.css";
+
+// Etapa "Feed Reels" (12/07/2026): o SmoothScrollProvider (Lenis)
+// saiu do layout — Lenis intercepta e "amortece" a rolagem da roda
+// do mouse pra animar o scroll do body sozinho, o que BRIGA com o
+// scroll-snap nativo do ReelsFeed (o feed some de esperar o encaixe
+// exato em cada slide). O arquivo continua no repositório, só não é
+// mais usado aqui.
 
 /**
  * Fontes do projeto (via next/font/google)
@@ -52,7 +58,7 @@ export default function RootLayout({
       <body
         className={`${chakraPetch.variable} ${sora.variable} ${ibmPlexMono.variable} antialiased`}
       >
-        <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        {children}
 
         {/* Grão de filme por cima de tudo (menos da contagem
             regressiva, que tem z-index ainda mais alto). */}
