@@ -52,13 +52,6 @@ const INDICE_DO_POSTER = 0;
 // a conexão) nem uma por vez (demoraria demais).
 const TAMANHO_DO_LOTE = 12;
 
-// Abaixo desta largura de tela (em pixels CSS), consideramos "mobile"
-// e deslocamos o foguete um pouco pra esquerda do centro (composição
-// pensada pro celular, onde texto por cima costuma ficar mais ao
-// centro/baixo da tela).
-const LARGURA_TELA_ESTREITA = 768;
-const DESLOCAMENTO_MOBILE_PX = 30;
-
 // Nunca desenhar em mais que o dobro da densidade de pixels "normal"
 // — em telas com devicePixelRatio muito alto (ex.: 3), isso evitaria
 // canvases gigantes e desperdício de memória/processamento sem ganho
@@ -137,8 +130,8 @@ export default function LaunchFrames() {
     let indiceDesejado = INDICE_DO_POSTER;
 
     // Densidade de pixels e largura da tela atuais — recalculadas a
-    // cada redimensionamento, usadas tanto pra montar o canvas quanto
-    // pra decidir o deslocamento mobile no desenho.
+    // cada redimensionamento, usadas pra montar o canvas no tamanho
+    // certo.
     let dprAtual = 1;
     let larguraCssAtual = window.innerWidth;
 
@@ -172,17 +165,12 @@ export default function LaunchFrames() {
         alturaDesenho = larguraCanvas / aspectImagem;
       }
 
-      let x = (larguraCanvas - larguraDesenho) / 2;
+      // Corte central puro: o vídeo novo já é um close-up com os
+      // motores no centro do quadro, então centralizar o excesso
+      // cortado dos dois lados deixa o foguete no meio da tela em
+      // qualquer tamanho de janela.
+      const x = (larguraCanvas - larguraDesenho) / 2;
       const y = (alturaCanvas - alturaDesenho) / 2;
-
-      // Composição mobile: desloca o foguete levemente à esquerda do
-      // centro. Multiplicamos por dprAtual porque x/y aqui estão em
-      // pixels "de verdade" do canvas (já escalados pela densidade de
-      // tela) — sem isso, o deslocamento pareceria maior em telas de
-      // alta densidade.
-      if (larguraCssAtual < LARGURA_TELA_ESTREITA) {
-        x -= DESLOCAMENTO_MOBILE_PX * dprAtual;
-      }
 
       ctx!.drawImage(img, x, y, larguraDesenho, alturaDesenho);
     }

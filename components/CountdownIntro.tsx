@@ -3,128 +3,141 @@
 /**
  * CountdownIntro
  * ---------------------------------------------------------------
- * Tela cheia de contagem regressiva (T-3, T-2, T-1) que aparece
- * antes de tudo, estilo "painel de controle de lançamento". Depois
- * que termina, o overlay some com um fade suave e o componente sai
- * completamente do DOM (deixa de existir — não fica só invisível
- * escondido atrás dos outros elementos).
+ * Contagem regressiva DISCRETA no canto superior esquerdo da tela
+ * (antes era uma tela cheia que bloqueava tudo por 3 segundos —
+ * a Rosa pediu algo sutil, que deixe a pessoa ver o foguete e
+ * scrollar desde o primeiro instante).
+ *
+ * Comportamento: um pequeno painel de telemetria conta de T-10 até
+ * T-0, um segundo por vez, com um pontinho pulsando ao lado (como a
+ * luz de "gravando" de uma câmera). Ao chegar em zero, o texto vira
+ * "ignição autorizada" e o painel inteiro se dissolve e sai do DOM.
+ *
+ * FUTURO (áudio do centro de comando): quando a Rosa mandar o
+ * arquivo de áudio da contagem do controle de missão, ele deve
+ * começar a tocar no mesmo instante em que este componente monta —
+ * procurar o comentário "PONTO DE ENTRADA DO ÁUDIO" abaixo.
  * ---------------------------------------------------------------
  */
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 
+// De quantos segundos a contagem parte. 10 segundos = o clássico
+// "T minus 10" dos lançamentos reais (e o tamanho típico dos áudios
+// de contagem do centro de comando, o que vai facilitar sincronizar
+// o som depois).
+const SEGUNDOS_INICIAIS = 10;
+
+// Quanto tempo (em ms) a mensagem final "ignição autorizada" fica
+// visível antes do painel se dissolver.
+const PAUSA_FINAL_MS = 1600;
+
 export default function CountdownIntro() {
-  // O número muda só 3 vezes em ~3 segundos — frequência baixíssima,
-  // então useState está OK aqui. (A regra de "usar ref" do projeto é
-  // pra valores que mudam a cada quadro de animação, tipo o
-  // progresso do scroll em HeroScene — não é o caso deste contador.)
-  const [contagem, setContagem] = useState(3);
+  // O número muda 1 vez por segundo — frequência baixíssima, então
+  // useState está OK aqui (a regra de "usar ref" do projeto é pra
+  // valores que mudam a cada quadro de animação, tipo o progresso do
+  // scroll em LaunchFrames — não é o caso deste contador).
+  const [segundos, setSegundos] = useState(SEGUNDOS_INICIAIS);
   const [visivel, setVisivel] = useState(true);
 
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const numeroRef = useRef<HTMLDivElement>(null);
+  const painelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const overlay = overlayRef.current;
-    const numero = numeroRef.current;
-    if (!overlay || !numero) return;
+    const painel = painelRef.current;
+    if (!painel) return;
 
-    // Quem pediu "reduzir movimento" no sistema não deve ver o
-    // número "pulsando" (crescendo e voltando ao tamanho normal) —
-    // só uma troca simples de opacidade a cada segundo.
-    const reduzMovimento = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    // PONTO DE ENTRADA DO ÁUDIO ---------------------------------
+    // Quando o arquivo chegar: criar aqui um `new Audio("/caminho")`
+    // e dar .play() — navegadores podem bloquear som automático sem
+    // interação da pessoa, então vamos tratar isso juntos na hora.
+    // ------------------------------------------------------------
 
-    const tl = gsap.timeline({
-      onComplete: () => {
-        // Ao terminar a contagem, o overlay inteiro se dissolve...
-        gsap.to(overlay, {
-          opacity: 0,
-          duration: 0.6,
-          ease: "power1.out",
-          // ...e só então o componente sai do DOM de verdade.
-          onComplete: () => setVisivel(false),
-        });
-      },
-    });
+    // Tique de 1 em 1 segundo: desconta até chegar em 0 e então
+    // para o relógio (o efeito de saída é disparado pelo outro
+    // useEffect, que observa o valor chegar em 0).
+    const relogio = window.setInterval(() => {
+      setSegundos((valorAtual) => {
+        if (valorAtual <= 1) {
+          window.clearInterval(relogio);
+          return 0;
+        }
+        return valorAtual - 1;
+      });
+    }, 1000);
 
-    ([3, 2, 1] as const).forEach((valor, indice) => {
-      const instante = indice; // 0s, 1s, 2s — um número por segundo
-
-      // Troca o número exibido no instante certo da timeline.
-      tl.call(() => setContagem(valor), undefined, instante);
-
-      if (reduzMovimento) {
-        tl.fromTo(
-          numero,
-          { opacity: 0.3 },
-          { opacity: 1, duration: 0.25, ease: "power1.out" },
-          instante
-        );
-      } else {
-        // Pulso: o número "bate" (cresce e encolhe de volta), como
-        // um sinal de telemetria pulsando a cada segundo.
-        tl.fromTo(
-          numero,
-          { scale: 1.15, opacity: 0.4 },
-          { scale: 1, opacity: 1, duration: 0.35, ease: "power2.out" },
-          instante
-        );
-      }
-    });
-
-    // Prende a timeline em exatamente 3s (mantém o "T-1" visível até
-    // lá) antes de disparar o onComplete que inicia o fade-out.
-    tl.to({}, { duration: 0.001 }, 3);
-
-    return () => {
-      tl.kill();
-    };
+    return () => window.clearInterval(relogio);
   }, []);
 
-  // Removido do DOM de verdade — não é só CSS escondendo.
+  // Efeito de saída: quando a contagem zera, espera a pausa final
+  // (com "ignição autorizada" na tela) e dissolve o painel.
+  useEffect(() => {
+    if (segundos !== 0) return;
+    const painel = painelRef.current;
+    if (!painel) return;
+
+    const saida = window.setTimeout(() => {
+      gsap.to(painel, {
+        opacity: 0,
+        duration: 0.8,
+        ease: "power1.out",
+        // Só depois do fade o componente sai do DOM de verdade
+        // (deixa de existir — não fica invisível ocupando espaço).
+        onComplete: () => setVisivel(false),
+      });
+    }, PAUSA_FINAL_MS);
+
+    return () => window.clearTimeout(saida);
+  }, [segundos]);
+
   if (!visivel) return null;
+
+  const contagemZerou = segundos === 0;
 
   return (
     <div
-      ref={overlayRef}
+      ref={painelRef}
       aria-hidden="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg)]"
+      // pointer-events-none: o painel é só decorativo — cliques e
+      // scroll "atravessam" ele e chegam na página normalmente.
+      // Fica um pouco abaixo do bracket de HUD do hero (que ocupa o
+      // cantinho extremo) pra não brigar com ele.
+      className="pointer-events-none fixed left-5 top-16 z-40 sm:left-10 sm:top-20"
     >
-      {/* Linhas finas no topo e na base — moldura de painel de HUD
-          ("heads-up display", os painéis de dados sobrepostos que
-          pilotos e naves usam). */}
-      <div className="absolute inset-x-0 top-0 h-px bg-white/10" />
-      <div className="absolute inset-x-0 bottom-0 h-px bg-white/10" />
-
-      {/* Textos de telemetria decorativos, tipo painel de lançamento real —
-          fonte "telemetria" (--font-mono) e cor de texto apagado do projeto. */}
-      <div className="font-telemetry absolute left-4 top-4 text-[10px] uppercase tracking-[0.25em] text-[var(--text-dim)] sm:left-8 sm:top-8 sm:text-xs">
-        sistema · lançamento
+      <div className="flex items-center gap-2.5">
+        {/* Pontinho de status: âmbar pulsando durante a contagem
+            (cor exclusiva do fogo/motor no nosso design), e fica
+            aceso fixo quando a ignição é autorizada. O pulso usa a
+            classe animate-pulse do Tailwind — que o navegador já
+            desliga sozinho pra quem pediu "reduzir movimento". */}
+        <span
+          className={`h-1.5 w-1.5 rounded-full bg-[var(--exhaust)] ${
+            contagemZerou ? "" : "motion-safe:animate-pulse"
+          }`}
+        />
+        <span className="font-telemetry text-[11px] uppercase tracking-[0.3em] text-[var(--text-dim)] sm:text-xs">
+          {contagemZerou ? (
+            "ignição autorizada"
+          ) : (
+            <>
+              T-
+              <span className="text-[var(--text)]">
+                {String(segundos).padStart(2, "0")}
+              </span>
+              s
+            </>
+          )}
+        </span>
       </div>
-      <div className="font-telemetry absolute right-4 top-4 text-[10px] uppercase tracking-[0.25em] text-[var(--text-dim)] sm:right-8 sm:top-8 sm:text-xs">
-        28.5721°N 80.6480°W
-      </div>
-      <div className="font-telemetry absolute bottom-4 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.3em] text-[var(--text-dim)] sm:bottom-8 sm:text-xs">
-        iniciando transmissão
-      </div>
 
-      {/* "Mira" com cantos, como um reticle de câmera de rastreio de
-          lançamento, emoldurando o número central. */}
-      <div className="relative flex h-[46vh] w-[70vw] max-w-[420px] items-center justify-center sm:h-[380px]">
-        <span className="absolute left-0 top-0 h-8 w-8 border-l border-t border-white/30 sm:h-10 sm:w-10" />
-        <span className="absolute right-0 top-0 h-8 w-8 border-r border-t border-white/30 sm:h-10 sm:w-10" />
-        <span className="absolute bottom-0 left-0 h-8 w-8 border-b border-l border-white/30 sm:h-10 sm:w-10" />
-        <span className="absolute bottom-0 right-0 h-8 w-8 border-b border-r border-white/30 sm:h-10 sm:w-10" />
-
+      {/* Linha fina de "trilho" embaixo do texto, que encolhe junto
+          com a contagem — um progresso silencioso, sem números
+          gigantes na tela. */}
+      <div className="mt-2 h-px w-full bg-white/10">
         <div
-          ref={numeroRef}
-          className="font-display bg-gradient-to-b from-[var(--text)] to-[var(--accent)] bg-clip-text text-[22vw] font-black leading-none tracking-tighter text-transparent sm:text-[10rem]"
-        >
-          T-{contagem}
-        </div>
+          className="h-px bg-[var(--exhaust)]/70 transition-all duration-1000 ease-linear"
+          style={{ width: `${(segundos / SEGUNDOS_INICIAIS) * 100}%` }}
+        />
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import StarField from "@/components/StarField";
 import CountdownIntro from "@/components/CountdownIntro";
 import LaunchFrames from "@/components/LaunchFrames";
+import PortalIntro from "@/components/PortalIntro";
+import NewsFeed from "@/components/NewsFeed";
 
 export default function Home() {
   return (
@@ -8,32 +10,23 @@ export default function Home() {
       {/* Fundo de estrelas fixo, atrás de tudo (z-0) */}
       <StarField />
 
-      {/* Overlay de contagem regressiva — aparece por cima de tudo
-          e some sozinho depois de ~3.6s (fade-out incluído). */}
+      {/* Contagem regressiva discreta no canto superior esquerdo
+          (T-10 até a ignição) — não bloqueia nada: a pessoa pode
+          scrollar desde o primeiro instante. Some sozinha ao zerar. */}
       <CountdownIntro />
 
       <main className="relative">
         <LaunchFrames />
 
-        {/* Seção de exemplo, só para confirmar que a rolagem
-            continua normalmente depois que o foguete sai de tela.
-            Aqui entram as próximas seções (ex.: o feed de notícias
-            de verdade) — por enquanto, um card fake só pra dar
-            gosto do que vem, já com os tokens de design novos. */}
-        <section className="relative flex min-h-screen items-center justify-center bg-[var(--surface)] px-6 py-24">
-          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[var(--bg)]/60 p-6 shadow-[0_0_40px_rgba(91,140,255,0.08)]">
-            <span className="font-telemetry text-[10px] uppercase tracking-[0.3em] text-[var(--accent)]">
-              destaque · astrofísica
-            </span>
-            <h2 className="font-display mt-3 text-2xl font-semibold leading-snug text-[var(--text)]">
-              Telescópio James Webb encontra água em exoplaneta rochoso
-            </h2>
-            <p className="mt-3 text-sm text-[var(--text-dim)]">
-              O feed de notícias completo chega na próxima fase — aqui é só
-              um gostinho do que vem por aí.
-            </p>
-          </div>
-        </section>
+        {/* Ancoragem: poucas frases apresentando o portal, logo
+            depois do impacto visual do hero. */}
+        <PortalIntro />
+
+        {/* Feed scrollytelling: os cards de notícia (por enquanto,
+            12 mocks realistas em content/noticias.ts) entram
+            deslizando conforme a rolagem, como um feed de rede
+            social com identidade própria. */}
+        <NewsFeed />
       </main>
     </>
   );
