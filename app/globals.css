@@ -1,26 +1,45 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens — "Telemetria de Missão"
+ * ---------------------------------------------------------------
+ * "Token de design" = uma cor (ou medida) com nome, guardada em UM
+ * lugar só. Em vez de espalhar "#5B8CFF" em vários arquivos, usamos
+ * var(--accent) sempre — se um dia quisermos mudar o azul do site,
+ * troca aqui e muda em todo lugar de uma vez.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #05060b; /* fundo principal do site — quase preto, com leve azul */
+  --surface: #0a0d16; /* fundo de seções "elevadas" (cards, painéis) */
+  --text: #edf1fa; /* texto principal — branco levemente azulado */
+  --text-dim: rgba(237, 241, 250, 0.6); /* texto secundário, mais apagado */
+  --accent: #5b8cff; /* azul de destaque — usar para quase tudo */
+  --exhaust: #ffb56b; /* âmbar — EXCLUSIVO do fogo/motor do foguete */
 }
 
+/* Conecta nossos tokens às variáveis que o Tailwind 4 usa por baixo
+   dos panos (assim `bg-background`/`text-foreground`, se usados,
+   também respeitam a paleta nova). */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  /* Sora é a fonte padrão do corpo do site (--font-body vem do
+     next/font, configurado em app/layout.tsx). */
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Classes utilitárias de fonte -----------------------------------
+   Aplicam as outras duas fontes do projeto onde precisar, ex.:
+   <h1 className="font-display">Título</h1> */
+.font-display {
+  font-family: var(--font-display), sans-serif;
+}
+
+.font-telemetry {
+  font-family: var(--font-mono), monospace;
 }

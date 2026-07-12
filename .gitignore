@@ -42,3 +42,8 @@ next-env.d.ts
 
 # Config de MCP com chaves de API — NUNCA commitar
 .mcp.json
+
+# Vídeos brutos (pesados demais pro git — os frames extraídos em
+# public/rocket-frames/ são o que o site realmente usa)
+*.mp4
+*.mov
