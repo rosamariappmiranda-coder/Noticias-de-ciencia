@@ -32,14 +32,12 @@ body {
      next/font, configurado em app/layout.tsx). */
   font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
 
-  /* Etapa "Feed Reels": quem rola a página agora é o `<div>` do
-     ReelsFeed (components/ReelsFeed.tsx), não mais o body inteiro —
-     ele é "fixed inset-0" e tem seu próprio scroll interno com
-     scroll-snap. Sem isso aqui, o body ainda tentaria rolar por
-     baixo do feed (um scroll "vazando" por trás do outro, dando uma
-     sensação de rolagem dupla e confusa). */
-  height: 100dvh;
-  overflow: hidden;
+  /* Cópia "Hero Helix": aqui o efeito é o scroll CONTÍNUO estilo
+     helixearth.com — quem rola é o body inteiro (não um feed com
+     scroll-snap). Por isso NÃO travamos a altura nem escondemos o
+     overflow como faz o projeto original: a página precisa poder
+     rolar livremente pra o ScrollTrigger arrastar o foguete. */
+  min-height: 100dvh;
 }
 
 /* Classes utilitárias de fonte -----------------------------------
