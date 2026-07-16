@@ -31,11 +31,12 @@
  */
 
 import Image from "next/image";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { Noticia } from "@/content/noticias";
 import { criarClienteNavegador } from "@/lib/supabase/client";
+import PainelComentarios from "./PainelComentarios";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -120,8 +121,7 @@ export default function NoticiaImersiva({
   // aparecem no estado certo, sem "esquecer" o que a pessoa já fez.
   const [curtiu, setCurtiu] = useState(curtidaInicial);
   const [salvou, setSalvou] = useState(salvoInicial);
-  const [mostrarComentario, setMostrarComentario] = useState(false);
-  const [comentarioEnviado, setComentarioEnviado] = useState(false);
+  const [mostrarComentarios, setMostrarComentarios] = useState(false);
   const [compartilhou, setCompartilhou] = useState(false);
 
   // "Porteiro": guarda o MOTIVO do bloqueio (pra mostrar a mensagem
@@ -207,46 +207,10 @@ export default function NoticiaImersiva({
     }
   }
 
-  // --- COMENTAR (abrir/fechar o campo; exige login) ---
-  function aoClicarComentar() {
-    if (!usuarioId) {
-      setPortao("comentar");
-      return;
-    }
-    setMostrarComentario((v) => !v);
-  }
-
-  // --- ENVIAR COMENTÁRIO (grava de verdade na tabela) ---
-  async function aoEnviarComentario(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!usuarioId) {
-      setPortao("comentar");
-      return;
-    }
-    const campo = e.currentTarget.elements.namedItem(
-      "comentario"
-    ) as HTMLInputElement | null;
-    const texto = campo?.value.trim() ?? "";
-    if (!texto) {
-      setMostrarComentario(false);
-      return;
-    }
-    const supabase = supabaseRef.current!;
-    const { error } = await supabase.from("interacoes").insert({
-      user_id: usuarioId,
-      noticia_slug: noticia.slug,
-      categoria: noticia.categoria,
-      tipo: "comentario",
-      texto,
-    });
-    setMostrarComentario(false);
-    if (error) {
-      console.error("Erro ao comentar:", error.message);
-      return;
-    }
-    setComentarioEnviado(true);
-    window.setTimeout(() => setComentarioEnviado(false), 2500);
-  }
+  // Comentar agora abre um PAINEL completo (ver/responder/curtir) — ver
+  // o componente PainelComentarios. Aqui só controlamos abrir/fechar,
+  // pelo estado mostrarComentarios (no clique do botão). Ver comentários
+  // é público; postar/curtir exige login (tratado dentro do painel).
 
   useEffect(() => {
     const secao = secaoRef.current;
@@ -433,8 +397,8 @@ export default function NoticiaImersiva({
           {/* Comentar: abre/fecha o campo de comentário logo abaixo. */}
           <button
             type="button"
-            onClick={aoClicarComentar}
-            aria-expanded={mostrarComentario}
+            onClick={() => setMostrarComentarios((v) => !v)}
+            aria-expanded={mostrarComentarios}
             aria-label="Comentar"
             className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-[var(--text-dim)] transition hover:border-white/40 hover:text-[var(--text)] active:scale-90"
           >
@@ -481,34 +445,15 @@ export default function NoticiaImersiva({
           </button>
         </div>
 
-        {/* Aviso rápido quando um comentário é salvo com sucesso. */}
-        {comentarioEnviado && (
-          <p className="font-telemetry text-xs tracking-[0.15em] text-[var(--accent)] uppercase">
-            Comentário enviado! 💬
-          </p>
-        )}
-
-        {/* Campo de comentário (aparece só quando o botão é clicado, e
-            só pra quem está logado). Ao enviar, grava de verdade na
-            tabela interacoes. */}
-        {mostrarComentario && (
-          <form
-            onSubmit={aoEnviarComentario}
-            className="mt-1 flex flex-col gap-2 rounded-2xl border border-white/10 bg-black/40 p-3 backdrop-blur-sm sm:flex-row"
-          >
-            <input
-              name="comentario"
-              type="text"
-              placeholder="Escreva um comentário…"
-              className="font-body flex-1 rounded-full bg-white/5 px-4 py-2 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-dim)] focus:bg-white/10"
-            />
-            <button
-              type="submit"
-              className="rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-medium text-black transition active:scale-90"
-            >
-              Enviar
-            </button>
-          </form>
+        {/* Painel de comentários (ver / responder / curtir) — abre com
+            o botão Comentar. Ver é público; postar/curtir exige login
+            (o painel chama aoExigirLogin, que abre o popup do porteiro). */}
+        {mostrarComentarios && (
+          <PainelComentarios
+            noticiaSlug={noticia.slug}
+            usuarioId={usuarioId}
+            aoExigirLogin={() => setPortao("comentar")}
+          />
         )}
       </div>
 
