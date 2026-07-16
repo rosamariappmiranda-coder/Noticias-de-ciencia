@@ -73,7 +73,7 @@ export async function criarConta(formData: FormData) {
   redirect(
     "/login?mensagem=" +
       encodeURIComponent(
-        "Conta criada! Confirme pelo link enviado ao seu email para entrar."
+        "Conta criada com sucesso! Agora clique em Entrar e faça login com seu email e senha."
       )
   );
 }

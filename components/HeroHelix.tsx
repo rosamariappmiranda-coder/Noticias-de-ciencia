@@ -291,30 +291,41 @@ export default function HeroHelix() {
     // ------------------------------------------------------------
     precarregarTodosOsFrames();
 
-    const trigger = ScrollTrigger.create({
-      trigger: secao,
-      start: "top top",
-      end: "+=350%",
-      pin: true,
-      scrub: 1,
-      onUpdate: (self) => {
-        const p = self.progress;
+    // Envolvemos a criação do ScrollTrigger num gsap.context ligado à
+    // seção. Isso é ESSENCIAL por causa do "pin": o GSAP embrulha a
+    // seção presa num elemento extra (pin-spacer) no HTML, por fora do
+    // React. Ao trocar de página, o React desmonta este componente — e,
+    // se esse embrulho não for desfeito ANTES, o React tenta remover um
+    // nó que "mudou de lugar" e estoura o erro "Failed to execute
+    // 'removeChild'/'insertBefore' on 'Node'". O ctx.revert() na limpeza
+    // desfaz tudo que o GSAP mexeu (inclusive o pin-spacer), na ordem
+    // certa, antes do React remover os elementos.
+    const contextoGsap = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: secao,
+        start: "top top",
+        end: "+=350%",
+        pin: true,
+        scrub: 1,
+        onUpdate: (self) => {
+          const p = self.progress;
 
-        // Fase 1 (0 → FIM_DO_VOO): troca de fotograma. Depois de
-        // FIM_DO_VOO o índice fica travado no último quadro.
-        const progressoVoo = remapear(p, 0, FIM_DO_VOO);
-        indiceDesejado = Math.round(progressoVoo * (TOTAL_DE_FRAMES - 1));
-        atualizarDesenhoParaAlvo();
+          // Fase 1 (0 → FIM_DO_VOO): troca de fotograma. Depois de
+          // FIM_DO_VOO o índice fica travado no último quadro.
+          const progressoVoo = remapear(p, 0, FIM_DO_VOO);
+          indiceDesejado = Math.round(progressoVoo * (TOTAL_DE_FRAMES - 1));
+          atualizarDesenhoParaAlvo();
 
-        // Fase 2 (FIM_DO_VOO → 1): dissolução.
-        const melt = remapear(p, FIM_DO_VOO, 1);
-        aplicarDissolucao(melt);
-      },
-    });
+          // Fase 2 (FIM_DO_VOO → 1): dissolução.
+          const melt = remapear(p, FIM_DO_VOO, 1);
+          aplicarDissolucao(melt);
+        },
+      });
+    }, secao);
 
     return () => {
       cancelado = true;
-      trigger.kill();
+      contextoGsap.revert();
       window.removeEventListener("resize", ajustarTamanho);
     };
   }, []);

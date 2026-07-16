@@ -12,7 +12,6 @@
  * ---------------------------------------------------------------
  */
 
-import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { sair } from "@/app/login/actions";
 
@@ -50,12 +49,15 @@ export default async function BarraUsuario() {
           </form>
         </>
       ) : (
-        <Link
+        // <a> comum (recarrega a página inteira) em vez de <Link> do
+        // Next: garante que sair do feed pro /login sempre funcione,
+        // mesmo com as animações pesadas de scroll (GSAP) na página.
+        <a
           href="/login"
           className="font-telemetry rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-1.5 text-xs tracking-[0.1em] text-[var(--text)] uppercase backdrop-blur-sm transition hover:bg-[var(--accent)]/20"
         >
           Entrar
-        </Link>
+        </a>
       )}
     </div>
   );
