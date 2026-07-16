@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Chakra_Petch, Sora, IBM_Plex_Mono } from "next/font/google";
 import GrainOverlay from "@/components/GrainOverlay";
+import BarraUsuario from "@/components/BarraUsuario";
 import "./globals.css";
 
 // Etapa "Feed Reels" (12/07/2026): o SmoothScrollProvider (Lenis)
@@ -59,6 +60,10 @@ export default function RootLayout({
         className={`${chakraPetch.variable} ${sora.variable} ${ibmPlexMono.variable} antialiased`}
       >
         {children}
+
+        {/* Cantinho de login/usuário, fixo no topo direito em todas as
+            páginas (mostra "Entrar" ou "Olá, <nome>" + Sair). */}
+        <BarraUsuario />
 
         {/* Grão de filme por cima de tudo (menos da contagem
             regressiva, que tem z-index ainda mais alto). */}
