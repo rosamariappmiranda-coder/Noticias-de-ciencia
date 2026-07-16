@@ -13,7 +13,7 @@
  */
 
 import { useState } from "react";
-import { entrar, criarConta, entrarComGoogle } from "@/app/login/actions";
+import { entrar, criarConta } from "@/app/login/actions";
 
 export default function FormularioAuth({
   modoInicial,
@@ -107,18 +107,20 @@ export default function FormularioAuth({
         <span className="h-px flex-1 bg-white/10" />
       </div>
 
-      {/* Botão do Google (form separado, chama a própria action). Já
-          fica pronto — passa a funcionar assim que o Google for
-          configurado no painel do Supabase. */}
-      <form action={entrarComGoogle}>
-        <button
-          type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 py-3 text-sm text-[var(--text)] transition hover:border-white/40 hover:bg-white/5 active:scale-[0.98]"
-        >
-          <span aria-hidden="true">🇬</span>
-          Entrar com Google
-        </button>
-      </form>
+      {/* Botão do Google: ainda NÃO configurado (precisa de uma
+          credencial que só a Rosa gera na conta Google dela). Por
+          enquanto fica desativado e marcado como "em breve", pra não
+          confundir. A ação entrarComGoogle continua pronta no código
+          pra quando a gente ligar. */}
+      <button
+        type="button"
+        disabled
+        title="Em breve — a gente configura o Google depois"
+        className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-white/10 py-3 text-sm text-[var(--text-dim)] opacity-50"
+      >
+        <span aria-hidden="true">🇬</span>
+        Entrar com Google (em breve)
+      </button>
     </div>
   );
 }

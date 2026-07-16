@@ -47,6 +47,11 @@ export const metadata: Metadata = {
   title: "Notícias das Estrelas",
   description:
     "Notícias de ciência, espaço e tecnologia em uma viagem imersiva.",
+  // Pede pro Google Tradutor NÃO traduzir o site. Tradutores automáticos
+  // trocam os textos por novos nós de HTML, o que "confunde" o React e
+  // causa o erro "Failed to execute 'insertBefore' on 'Node'". Como o
+  // site já é em português, não há nada pra traduzir mesmo.
+  other: { google: "notranslate" },
 };
 
 export default function RootLayout({
@@ -55,7 +60,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" translate="no">
       <body
         className={`${chakraPetch.variable} ${sora.variable} ${ibmPlexMono.variable} antialiased`}
       >
