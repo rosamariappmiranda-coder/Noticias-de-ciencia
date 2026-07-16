@@ -245,15 +245,21 @@ export default function HeroHelix() {
     // quanto pelo caminho de "reduzir movimento".
     // ------------------------------------------------------------
     function aplicarDissolucao(melt: number) {
-      // Canvas some e afasta levemente.
+      // Só o canvas do foguete: some e afasta levemente, revelando o céu
+      // de estrelas — e o feed logo abaixo — diretamente.
       canvas!.style.opacity = String(1 - melt);
       canvas!.style.transform = `scale(${1 + (ESCALA_NA_DISSOLUCAO - 1) * melt})`;
+    }
 
-      // Título aparece (e, se aceita movimento, sobe um pouquinho).
-      titulo!.style.opacity = String(melt);
+    // O título "Seu feed de conhecimento" aparece na ABERTURA (página
+    // parada no topo) e some cedo, assim que a rolagem começa — dando
+    // lugar ao foguete e, no fim, ao feed. Recebe o progresso p (0 a 1).
+    function aplicarSaidaTitulo(p: number) {
+      const saida = remapear(p, 0, 0.12);
+      titulo!.style.opacity = String(1 - saida);
       titulo!.style.transform = reduzMovimento
         ? "none"
-        : `translateY(${(1 - melt) * 24}px)`;
+        : `translateY(${-30 * saida}px)`;
     }
 
     // 1) Monta o canvas no tamanho certo.
@@ -272,13 +278,9 @@ export default function HeroHelix() {
     // prontos, estáticos. Não pina a seção nem baixa os 123 frames.
     // ------------------------------------------------------------
     if (reduzMovimento) {
-      carregarFrame(TOTAL_DE_FRAMES - 1).then(() => {
-        if (cancelado) return;
-        indiceDesejado = TOTAL_DE_FRAMES - 1;
-        atualizarDesenhoParaAlvo();
-        aplicarDissolucao(0); // canvas visível, título já pronto
-        titulo.style.opacity = "1";
-      });
+      // Sem animação: mostra o pôster (foguete parado) e o título
+      // prontos, estáticos. O feed vem logo abaixo, na rolagem normal.
+      if (titulo) titulo.style.opacity = "1";
       return () => {
         cancelado = true;
         window.removeEventListener("resize", ajustarTamanho);
@@ -316,7 +318,10 @@ export default function HeroHelix() {
           indiceDesejado = Math.round(progressoVoo * (TOTAL_DE_FRAMES - 1));
           atualizarDesenhoParaAlvo();
 
-          // Fase 2 (FIM_DO_VOO → 1): dissolução.
+          // Título de abertura some cedo, assim que começa a rolar.
+          aplicarSaidaTitulo(p);
+
+          // Fase 2 (FIM_DO_VOO → 1): dissolução do foguete → feed.
           const melt = remapear(p, FIM_DO_VOO, 1);
           aplicarDissolucao(melt);
         },
@@ -343,19 +348,40 @@ export default function HeroHelix() {
         className="absolute inset-0 h-full w-full origin-center"
       />
 
-      {/* Bloco de título que SURGE na dissolução — começa invisível
-          (opacity 0, controlado via .style no efeito acima). */}
+      {/* Título de ABERTURA — hi-tech. Visível quando o site abre
+          (página no topo) e some cedo conforme a pessoa começa a rolar
+          (controlado via .style no efeito acima). */}
       <div
         ref={tituloRef}
-        className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center opacity-0"
+        className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
       >
-        <div className="mx-auto mb-5 h-px w-14 bg-[var(--accent)]" />
-        <h1 className="font-display text-4xl font-bold tracking-[0.08em] text-[var(--text)] uppercase drop-shadow-lg md:text-7xl">
-          Notícias das Estrelas
+        {/* Etiqueta "HUD" — clima de painel de dados. */}
+        <div className="font-telemetry mb-6 flex items-center gap-3 text-[10px] tracking-[0.4em] text-[var(--accent)] uppercase sm:text-xs">
+          <span className="h-px w-8 bg-[var(--accent)]/60" />
+          Conhecimento personalizado
+          <span className="h-px w-8 bg-[var(--accent)]/60" />
+        </div>
+
+        {/* Título com texto em degradê + brilho (glow) azul. */}
+        <h1 className="font-display text-4xl leading-[1.05] font-bold tracking-[0.02em] uppercase drop-shadow-[0_0_25px_rgba(91,140,255,0.35)] md:text-7xl">
+          <span className="bg-gradient-to-b from-white via-white to-[var(--accent)] bg-clip-text text-transparent">
+            Seu feed de
+          </span>
+          <br />
+          <span className="bg-gradient-to-b from-[var(--accent)] to-white bg-clip-text text-transparent">
+            conhecimento
+          </span>
         </h1>
-        <p className="font-telemetry mt-4 max-w-md text-xs tracking-[0.25em] text-[var(--text-dim)] uppercase md:text-sm">
-          Ciência · Espaço · Tecnologia — sem enrolação
+
+        <p className="font-telemetry mt-5 max-w-md text-xs tracking-[0.25em] text-[var(--text-dim)] uppercase md:text-sm">
+          Ciência · Espaço · Tecnologia — só o que importa pra você
         </p>
+
+        {/* Convite pra rolar (pulsa suave). */}
+        <div className="font-telemetry mt-10 flex flex-col items-center gap-2 text-[10px] tracking-[0.3em] text-[var(--text-dim)] uppercase">
+          role para explorar
+          <span className="pulso-sinal text-base">↓</span>
+        </div>
       </div>
     </section>
   );

@@ -12,14 +12,16 @@
  * ---------------------------------------------------------------
  */
 
-import { noticias } from "@/content/noticias";
+import type { Noticia } from "@/content/noticias";
 import NoticiaImersiva from "./NoticiaImersiva";
 
 export default function FeedNoticias({
+  noticias,
   usuarioId,
   curtidasSlugs,
   salvosSlugs,
 }: {
+  noticias: Noticia[]; // já vem ORDENADO pelo algoritmo (ver app/page.tsx)
   usuarioId: string | null;
   curtidasSlugs: string[]; // slugs que o usuário já curtiu
   salvosSlugs: string[]; // slugs que o usuário já salvou

@@ -44,9 +44,9 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Notícias das Estrelas",
+  title: "Seu feed de conhecimento",
   description:
-    "Notícias de ciência, espaço e tecnologia em uma viagem imersiva.",
+    "Ciência, espaço e tecnologia — um feed personalizado que aprende com você.",
   // Pede pro Google Tradutor NÃO traduzir o site. Tradutores automáticos
   // trocam os textos por novos nós de HTML, o que "confunde" o React e
   // causa o erro "Failed to execute 'insertBefore' on 'Node'". Como o

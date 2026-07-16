@@ -163,6 +163,23 @@ export default function PainelComentarios({
     await carregar();
   }
 
+  // Excluir um comentário próprio. A RLS já garante que só o autor
+  // consegue apagar; a checagem aqui é só pra não nem tentar à toa.
+  // Apagar um comentário principal leva junto as respostas dele (cascade).
+  async function excluir(c: Comentario) {
+    if (c.user_id !== usuarioId) return;
+    const supabase = supabaseRef.current!;
+    const { error } = await supabase
+      .from("comentarios")
+      .delete()
+      .eq("id", c.id);
+    if (error) {
+      console.error("Erro ao excluir comentário:", error.message);
+      return;
+    }
+    await carregar();
+  }
+
   const principais = comentarios.filter((c) => c.parent_id === null);
   const respostasDe = (id: string) =>
     comentarios.filter((c) => c.parent_id === id);
@@ -205,6 +222,7 @@ export default function PainelComentarios({
               aoResponder={() =>
                 setRespondendoA(respondendoA === c.id ? null : c.id)
               }
+              aoExcluir={c.user_id === usuarioId ? () => excluir(c) : undefined}
             />
 
             {/* Respostas (um nível), recuadas. */}
@@ -215,6 +233,9 @@ export default function PainelComentarios({
                     key={r.id}
                     c={r}
                     aoCurtir={() => alternarCurtida(r)}
+                    aoExcluir={
+                      r.user_id === usuarioId ? () => excluir(r) : undefined
+                    }
                   />
                 ))}
               </div>
@@ -244,10 +265,12 @@ function ComentarioItem({
   c,
   aoCurtir,
   aoResponder,
+  aoExcluir,
 }: {
   c: Comentario;
   aoCurtir: () => void;
   aoResponder?: () => void;
+  aoExcluir?: () => void; // definido só quando o comentário é do próprio usuário
 }) {
   return (
     <div>
@@ -283,6 +306,15 @@ function ComentarioItem({
             className="text-xs text-[var(--text-dim)] transition hover:text-[var(--text)]"
           >
             Responder
+          </button>
+        )}
+        {aoExcluir && (
+          <button
+            type="button"
+            onClick={aoExcluir}
+            className="text-xs text-[var(--text-dim)] transition hover:text-red-300"
+          >
+            Excluir
           </button>
         )}
       </div>
