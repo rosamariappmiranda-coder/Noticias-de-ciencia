@@ -31,10 +31,11 @@
  */
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { Noticia } from "@/content/noticias";
+import { criarClienteNavegador } from "@/lib/supabase/client";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -67,25 +68,185 @@ function curtidasIniciais(indice: number): number {
   return 120 + ((indice * 137) % 880);
 }
 
+// Quem NÃO está logado pode curtir até este limite; da próxima em diante,
+// o "porteiro" pede login. A contagem fica guardada no próprio navegador
+// da pessoa (localStorage).
+const LIMITE_CURTIDAS_ANONIMAS = 5;
+const CHAVE_CURTIDAS_ANONIMAS = "curtidas_anonimas_total";
+
+function lerCurtidasAnonimas(): number {
+  try {
+    return Number(localStorage.getItem(CHAVE_CURTIDAS_ANONIMAS) ?? "0") || 0;
+  } catch {
+    return 0;
+  }
+}
+function salvarCurtidasAnonimas(valor: number) {
+  try {
+    localStorage.setItem(CHAVE_CURTIDAS_ANONIMAS, String(Math.max(0, valor)));
+  } catch {
+    // Se o navegador bloquear o localStorage, tudo bem — o limite só não
+    // será lembrado entre recarregamentos.
+  }
+}
+
+// Mensagem do "porteiro" conforme o que a pessoa tentou fazer sem login.
+const MENSAGEM_PORTAO: Record<"curtir" | "comentar" | "salvar", string> = {
+  curtir: "Você curtiu bastante! 🌟 Crie uma conta pra continuar curtindo.",
+  comentar: "Pra comentar, crie sua conta.",
+  salvar: "Pra salvar e ler depois, crie sua conta.",
+};
+
 export default function NoticiaImersiva({
   noticia,
   indice,
+  usuarioId,
+  curtidaInicial,
+  salvoInicial,
 }: {
   noticia: Noticia;
   indice: number;
+  usuarioId: string | null; // id do usuário logado, ou null se anônimo
+  curtidaInicial: boolean; // já curtiu esta notícia? (vem do banco)
+  salvoInicial: boolean; // já salvou esta notícia? (vem do banco)
 }) {
   const secaoRef = useRef<HTMLElement>(null);
   const camadaCursorRef = useRef<HTMLDivElement>(null); // recebe a inclinação do mouse
   const camadaScrollRef = useRef<HTMLDivElement>(null); // recebe o parallax/zoom
   const textoRef = useRef<HTMLDivElement>(null);
 
-  // Estado local das interações (só visual, ver comentário do topo).
-  const [curtiu, setCurtiu] = useState(false);
-  const [salvou, setSalvou] = useState(false);
+  // Estado das interações. curtiu/salvou já começam com o que veio do
+  // banco (pra quem está logado) — assim, ao recarregar, os botões
+  // aparecem no estado certo, sem "esquecer" o que a pessoa já fez.
+  const [curtiu, setCurtiu] = useState(curtidaInicial);
+  const [salvou, setSalvou] = useState(salvoInicial);
   const [mostrarComentario, setMostrarComentario] = useState(false);
+  const [comentarioEnviado, setComentarioEnviado] = useState(false);
   const [compartilhou, setCompartilhou] = useState(false);
 
+  // "Porteiro": guarda o MOTIVO do bloqueio (pra mostrar a mensagem
+  // certa no popup). null = popup fechado.
+  const [portao, setPortao] = useState<null | "curtir" | "comentar" | "salvar">(
+    null
+  );
+
   const curtidas = curtidasIniciais(indice) + (curtiu ? 1 : 0);
+
+  // Cliente Supabase do navegador — criado só uma vez. É por ele que
+  // gravamos/apagamos as interações (a segurança RLS garante que cada
+  // pessoa só mexe nas próprias).
+  const supabaseRef = useRef<ReturnType<typeof criarClienteNavegador> | null>(
+    null
+  );
+  if (!supabaseRef.current) supabaseRef.current = criarClienteNavegador();
+
+  // --- CURTIR ---
+  async function aoCurtir() {
+    // Logado: grava/apaga no banco. Atualização "otimista": mexe na tela
+    // na hora e, se der erro, desfaz.
+    if (usuarioId) {
+      const supabase = supabaseRef.current!;
+      const novo = !curtiu;
+      setCurtiu(novo);
+      const { error } = novo
+        ? await supabase.from("interacoes").insert({
+            user_id: usuarioId,
+            noticia_slug: noticia.slug,
+            categoria: noticia.categoria,
+            tipo: "curtida",
+          })
+        : await supabase
+            .from("interacoes")
+            .delete()
+            .eq("user_id", usuarioId)
+            .eq("noticia_slug", noticia.slug)
+            .eq("tipo", "curtida");
+      if (error) {
+        setCurtiu(!novo);
+        console.error("Erro ao curtir:", error.message);
+      }
+      return;
+    }
+    // Anônimo: contador local + porteiro a partir da 6ª curtida.
+    if (curtiu) {
+      setCurtiu(false);
+      salvarCurtidasAnonimas(lerCurtidasAnonimas() - 1);
+    } else if (lerCurtidasAnonimas() >= LIMITE_CURTIDAS_ANONIMAS) {
+      setPortao("curtir");
+    } else {
+      setCurtiu(true);
+      salvarCurtidasAnonimas(lerCurtidasAnonimas() + 1);
+    }
+  }
+
+  // --- SALVAR --- (sempre exige login)
+  async function aoSalvar() {
+    if (!usuarioId) {
+      setPortao("salvar");
+      return;
+    }
+    const supabase = supabaseRef.current!;
+    const novo = !salvou;
+    setSalvou(novo);
+    const { error } = novo
+      ? await supabase.from("interacoes").insert({
+          user_id: usuarioId,
+          noticia_slug: noticia.slug,
+          categoria: noticia.categoria,
+          tipo: "salvo",
+        })
+      : await supabase
+          .from("interacoes")
+          .delete()
+          .eq("user_id", usuarioId)
+          .eq("noticia_slug", noticia.slug)
+          .eq("tipo", "salvo");
+    if (error) {
+      setSalvou(!novo);
+      console.error("Erro ao salvar:", error.message);
+    }
+  }
+
+  // --- COMENTAR (abrir/fechar o campo; exige login) ---
+  function aoClicarComentar() {
+    if (!usuarioId) {
+      setPortao("comentar");
+      return;
+    }
+    setMostrarComentario((v) => !v);
+  }
+
+  // --- ENVIAR COMENTÁRIO (grava de verdade na tabela) ---
+  async function aoEnviarComentario(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!usuarioId) {
+      setPortao("comentar");
+      return;
+    }
+    const campo = e.currentTarget.elements.namedItem(
+      "comentario"
+    ) as HTMLInputElement | null;
+    const texto = campo?.value.trim() ?? "";
+    if (!texto) {
+      setMostrarComentario(false);
+      return;
+    }
+    const supabase = supabaseRef.current!;
+    const { error } = await supabase.from("interacoes").insert({
+      user_id: usuarioId,
+      noticia_slug: noticia.slug,
+      categoria: noticia.categoria,
+      tipo: "comentario",
+      texto,
+    });
+    setMostrarComentario(false);
+    if (error) {
+      console.error("Erro ao comentar:", error.message);
+      return;
+    }
+    setComentarioEnviado(true);
+    window.setTimeout(() => setComentarioEnviado(false), 2500);
+  }
 
   useEffect(() => {
     const secao = secaoRef.current;
@@ -256,7 +417,7 @@ export default function NoticiaImersiva({
               no clique dá aquele "pulinho" do coração. */}
           <button
             type="button"
-            onClick={() => setCurtiu((v) => !v)}
+            onClick={aoCurtir}
             aria-pressed={curtiu}
             aria-label={curtiu ? "Descurtir" : "Curtir"}
             className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition active:scale-90 ${
@@ -272,7 +433,7 @@ export default function NoticiaImersiva({
           {/* Comentar: abre/fecha o campo de comentário logo abaixo. */}
           <button
             type="button"
-            onClick={() => setMostrarComentario((v) => !v)}
+            onClick={aoClicarComentar}
             aria-expanded={mostrarComentario}
             aria-label="Comentar"
             className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-[var(--text-dim)] transition hover:border-white/40 hover:text-[var(--text)] active:scale-90"
@@ -284,7 +445,7 @@ export default function NoticiaImersiva({
           {/* Salvar: alterna marcado/desmarcado. */}
           <button
             type="button"
-            onClick={() => setSalvou((v) => !v)}
+            onClick={aoSalvar}
             aria-pressed={salvou}
             aria-label={salvou ? "Remover dos salvos" : "Salvar"}
             className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition active:scale-90 ${
@@ -320,18 +481,23 @@ export default function NoticiaImersiva({
           </button>
         </div>
 
-        {/* Campo de comentário (aparece só quando o botão é clicado).
-            É puramente visual por enquanto: "enviar" só limpa o campo e
-            fecha — nada é salvo ainda (isso vem com o banco de dados). */}
+        {/* Aviso rápido quando um comentário é salvo com sucesso. */}
+        {comentarioEnviado && (
+          <p className="font-telemetry text-xs tracking-[0.15em] text-[var(--accent)] uppercase">
+            Comentário enviado! 💬
+          </p>
+        )}
+
+        {/* Campo de comentário (aparece só quando o botão é clicado, e
+            só pra quem está logado). Ao enviar, grava de verdade na
+            tabela interacoes. */}
         {mostrarComentario && (
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              setMostrarComentario(false);
-            }}
+            onSubmit={aoEnviarComentario}
             className="mt-1 flex flex-col gap-2 rounded-2xl border border-white/10 bg-black/40 p-3 backdrop-blur-sm sm:flex-row"
           >
             <input
+              name="comentario"
               type="text"
               placeholder="Escreva um comentário…"
               className="font-body flex-1 rounded-full bg-white/5 px-4 py-2 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-dim)] focus:bg-white/10"
@@ -345,6 +511,42 @@ export default function NoticiaImersiva({
           </form>
         )}
       </div>
+
+      {/* PORTÃO (popup gentil): aparece quando alguém sem login tenta
+          curtir demais, comentar ou salvar. É "fixed", então cobre a
+          tela toda mesmo estando dentro da seção. */}
+      {portao && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-6">
+          {/* Fundo escurecido — clicar nele fecha o popup. */}
+          <button
+            type="button"
+            aria-label="Fechar"
+            onClick={() => setPortao(null)}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          />
+          <div className="relative w-full max-w-sm rounded-3xl border border-white/10 bg-[var(--surface)] p-7 text-center">
+            <p className="font-display text-lg font-bold text-[var(--text)]">
+              {MENSAGEM_PORTAO[portao]}
+            </p>
+            <p className="mt-2 text-sm text-[var(--text-dim)]">
+              Leva 10 segundos e o seu feed fica só do seu jeito. ✨
+            </p>
+            <a
+              href="/login"
+              className="mt-5 block rounded-xl bg-[var(--accent)] py-3 text-sm font-medium text-black transition hover:brightness-110"
+            >
+              Criar conta / Entrar
+            </a>
+            <button
+              type="button"
+              onClick={() => setPortao(null)}
+              className="mt-2 w-full py-2 text-xs tracking-[0.15em] text-[var(--text-dim)] uppercase transition hover:text-[var(--text)]"
+            >
+              Agora não
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
