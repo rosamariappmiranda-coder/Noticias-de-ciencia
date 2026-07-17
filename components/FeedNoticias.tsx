@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
  */
 
-import type { Noticia } from "@/content/noticias";
+import type { NoticiaFeed } from "@/lib/tipos-feed";
 import NoticiaImersiva from "./NoticiaImersiva";
 
 export default function FeedNoticias({
@@ -21,7 +21,7 @@ export default function FeedNoticias({
   curtidasSlugs,
   salvosSlugs,
 }: {
-  noticias: Noticia[]; // já vem ORDENADO pelo algoritmo (ver app/page.tsx)
+  noticias: NoticiaFeed[]; // já vem ORDENADO pelo algoritmo (ver app/page.tsx)
   usuarioId: string | null;
   curtidasSlugs: string[]; // slugs que o usuário já curtiu
   salvosSlugs: string[]; // slugs que o usuário já salvou
@@ -41,6 +41,28 @@ export default function FeedNoticias({
           salvoInicial={salvosSlugs.includes(noticia.slug)}
         />
       ))}
+
+      {/* FIM DO FEED — fechamento com gancho de retorno (efeito
+          "Zeigarnik": lembrar a pessoa de que amanhã tem mais mantém a
+          história em aberto na cabeça dela). */}
+      <section className="relative flex min-h-[70vh] w-full flex-col items-center justify-center px-6 text-center">
+        <p className="font-telemetry text-xs tracking-[0.35em] text-[var(--accent)] uppercase">
+          transmissão de hoje encerrada
+        </p>
+        <h2 className="font-display mt-4 max-w-xl text-3xl font-bold text-[var(--text)] md:text-5xl">
+          Você zerou o feed. O universo, não.
+        </h2>
+        <p className="mt-4 max-w-md text-base text-[var(--text-dim)]">
+          Amanhã tem descoberta nova, tendência nova e polêmica nova.
+          A ciência não dorme — e o seu feed também não.
+        </p>
+        <a
+          href="#topo"
+          className="font-telemetry mt-8 rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-6 py-3 text-xs tracking-[0.25em] text-[var(--text)] uppercase transition hover:bg-[var(--accent)]/20"
+        >
+          ↑ decolar de novo
+        </a>
+      </section>
     </div>
   );
 }

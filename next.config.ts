@@ -2,14 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Libera o domínio da biblioteca de imagens da NASA (domínio
-    // público) como fonte permitida pro next/image otimizar — sem
-    // isso, o Next bloqueia por segurança qualquer imagem que não
-    // venha do próprio site ou de um domínio explicitamente liberado.
+    // O feed agrega notícias de VÁRIOS portais, cada um com seu próprio
+    // domínio de imagens (Olhar Digital, Canaltech, G1, NASA...). O "**"
+    // libera qualquer domínio HTTPS pro next/image otimizar — aceitável
+    // aqui porque só exibimos imagens vindas do nosso próprio banco de
+    // notícias (inseridas pelo robô), não URLs digitadas por usuários.
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "images-assets.nasa.gov",
+        hostname: "**",
       },
     ],
   },

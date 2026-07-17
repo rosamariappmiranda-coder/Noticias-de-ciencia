@@ -355,31 +355,33 @@ export default function HeroHelix() {
         ref={tituloRef}
         className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
       >
-        {/* Etiqueta "HUD" — clima de painel de dados. */}
+        {/* Etiqueta "HUD" — a marca, discreta, como assinatura de
+            transmissão. */}
         <div className="font-telemetry mb-6 flex items-center gap-3 text-[10px] tracking-[0.4em] text-[var(--accent)] uppercase sm:text-xs">
-          <span className="h-px w-8 bg-[var(--accent)]/60" />
-          Conhecimento personalizado
-          <span className="h-px w-8 bg-[var(--accent)]/60" />
+          <span className="pulso-sinal inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+          seu feed de conhecimento · ao vivo
         </div>
 
         {/* Título com texto em degradê + brilho (glow) azul. */}
-        <h1 className="font-display text-4xl leading-[1.05] font-bold tracking-[0.02em] uppercase drop-shadow-[0_0_25px_rgba(91,140,255,0.35)] md:text-7xl">
+        <h1 className="font-display text-4xl leading-[1.04] font-bold tracking-[0.01em] uppercase drop-shadow-[0_0_25px_rgba(91,140,255,0.35)] md:text-7xl">
           <span className="bg-gradient-to-b from-white via-white to-[var(--accent)] bg-clip-text text-transparent">
-            Seu feed de
+            O futuro chega
           </span>
           <br />
           <span className="bg-gradient-to-b from-[var(--accent)] to-white bg-clip-text text-transparent">
-            conhecimento
+            aqui primeiro.
           </span>
         </h1>
 
-        <p className="font-telemetry mt-5 max-w-md text-xs tracking-[0.25em] text-[var(--text-dim)] uppercase md:text-sm">
-          Ciência · Espaço · Tecnologia — só o que importa pra você
+        <p className="mt-6 max-w-md text-sm leading-relaxed text-[var(--text-dim)] md:text-base">
+          As descobertas, tendências e ideias que estão redesenhando o
+          mundo — escolhidas pra você por um algoritmo que aprende o que
+          te move.
         </p>
 
         {/* Convite pra rolar (pulsa suave). */}
         <div className="font-telemetry mt-10 flex flex-col items-center gap-2 text-[10px] tracking-[0.3em] text-[var(--text-dim)] uppercase">
-          role para explorar
+          arrasta pra decolar
           <span className="pulso-sinal text-base">↓</span>
         </div>
       </div>

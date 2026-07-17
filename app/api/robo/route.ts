@@ -32,6 +32,7 @@ export async function GET(request: Request) {
       total: noticias.length,
       porCategoria: contarPorCategoria(noticias),
       amostra: noticias.slice(0, 8),
+      todas: noticias, // usado por scripts de povoamento local
     });
   }
 

@@ -2,9 +2,12 @@ import StarField from "@/components/StarField";
 import SmoothScrollProvider from "@/components/SmoothScrollProvider";
 import HeroHelix from "@/components/HeroHelix";
 import FeedNoticias from "@/components/FeedNoticias";
+import BarraProgresso from "@/components/BarraProgresso";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { noticias } from "@/content/noticias";
 import { ordenarFeed, type SinalInteracao } from "@/lib/algoritmo-feed";
+import type { NoticiaFeed } from "@/lib/tipos-feed";
+import type { Categoria } from "@/content/noticias";
 
 // Cópia "Hero Helix" (12/07/2026): efeito estilo helixearth.com numa
 // porta separada (:3005), sem tocar no projeto original (:3002).
@@ -25,18 +28,59 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // ------------------------------------------------------------
+  // MONTA O CARDÁPIO DO FEED: notícias do BANCO (agregadas pelo robô,
+  // frescas da web) + as escritas à mão (content/noticias.ts).
+  // ------------------------------------------------------------
+  const { data: doBanco } = await supabase
+    .from("noticias")
+    .select("slug, categoria, manchete, resumo, imagem, url_fonte, fonte_nome, data_iso")
+    .order("data_iso", { ascending: false })
+    .limit(120);
+
+  const agregadas: NoticiaFeed[] = (doBanco ?? []).map((n) => ({
+    slug: n.slug,
+    categoria: n.categoria as Categoria,
+    manchete: n.manchete,
+    resumo: n.resumo,
+    imagem: n.imagem,
+    dataISO: n.data_iso,
+    fonteNome: n.fonte_nome,
+    urlFonte: n.url_fonte,
+  }));
+
+  const escritas: NoticiaFeed[] = noticias.map((n) => ({
+    slug: n.slug,
+    categoria: n.categoria,
+    manchete: n.manchete,
+    resumo: n.resumo,
+    imagem: n.imagem,
+    dataISO: n.dataISO,
+    fonteNome: null,
+    urlFonte: null,
+  }));
+
+  // Junta as duas origens sem repetir slug.
+  const slugsVistos = new Set<string>();
+  const cardapio: NoticiaFeed[] = [];
+  for (const n of [...agregadas, ...escritas]) {
+    if (slugsVistos.has(n.slug)) continue;
+    slugsVistos.add(n.slug);
+    cardapio.push(n);
+  }
+
   const curtidasSlugs: string[] = [];
   const salvosSlugs: string[] = [];
   const sinais: SinalInteracao[] = []; // "combustível" do algoritmo
 
   if (user) {
-    // Curtidas e salvos: viram estado inicial dos botões E sinais do
-    // algoritmo (com categoria e data).
+    // Curtidas, salvos e VISUALIZAÇÕES (tempo de atenção): viram
+    // estado inicial dos botões e sinais do algoritmo.
     const { data: inter } = await supabase
       .from("interacoes")
       .select("noticia_slug, categoria, tipo, created_at")
       .eq("user_id", user.id)
-      .in("tipo", ["curtida", "salvo"]);
+      .in("tipo", ["curtida", "salvo", "visualizacao"]);
     for (const linha of inter ?? []) {
       if (linha.tipo === "curtida") curtidasSlugs.push(linha.noticia_slug);
       else if (linha.tipo === "salvo") salvosSlugs.push(linha.noticia_slug);
@@ -49,9 +93,7 @@ export default async function Home() {
 
     // Comentários também são sinais (fortes) de interesse. A categoria
     // vem da própria notícia comentada.
-    const categoriaPorSlug = new Map(
-      noticias.map((n) => [n.slug, n.categoria])
-    );
+    const categoriaPorSlug = new Map(cardapio.map((n) => [n.slug, n.categoria]));
     const { data: coms } = await supabase
       .from("comentarios")
       .select("noticia_slug, created_at")
@@ -66,10 +108,17 @@ export default async function Home() {
 
   // O ALGORITMO ordena o feed pra ESTE usuário (sem sinais, cai no
   // frescor — mais recentes primeiro).
-  const feedOrdenado = ordenarFeed(noticias, sinais);
+  const feedOrdenado = ordenarFeed(cardapio, sinais);
 
   return (
     <SmoothScrollProvider>
+      {/* Âncora do topo (o botão "decolar de novo" do fim do feed
+          aponta pra cá). */}
+      <span id="topo" />
+
+      {/* Linha de progresso da leitura, fixa no topo. */}
+      <BarraProgresso />
+
       {/* Céu de estrelas fixo, atrás de tudo. É ele que "aparece"
           quando o canvas do foguete se dissolve. */}
       <StarField />

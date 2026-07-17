@@ -34,7 +34,8 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import type { Noticia } from "@/content/noticias";
+import type { Categoria } from "@/content/noticias";
+import type { NoticiaFeed } from "@/lib/tipos-feed";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 import PainelComentarios from "./PainelComentarios";
 
@@ -42,12 +43,33 @@ gsap.registerPlugin(ScrollTrigger);
 
 // Rótulo bonito (em CAIXA ALTA) mostrado pra cada categoria. Fica num
 // objeto separado pra ser fácil de ler e trocar depois.
-const ROTULO_CATEGORIA: Record<Noticia["categoria"], string> = {
+const ROTULO_CATEGORIA: Record<Categoria, string> = {
   espaço: "Espaço",
   tecnologia: "Tecnologia",
   física: "Física",
   biologia: "Biologia",
   ia: "Inteligência Artificial",
+};
+
+// Cada categoria tem uma COR de assinatura — o cérebro associa cor a
+// assunto muito antes de ler a palavra (codificação visual rápida, o
+// mesmo truque de apps grandes). Usada no rótulo, na régua e no glow.
+const COR_CATEGORIA: Record<Categoria, string> = {
+  espaço: "#5b8cff", // azul — profundidade
+  tecnologia: "#ffb56b", // âmbar — energia
+  física: "#6be3ff", // ciano — precisão
+  biologia: "#7dffa9", // verde — vida
+  ia: "#c79bff", // violeta — mistério
+};
+
+// Emoji-símbolo de cada categoria, usado no visual reserva das
+// notícias agregadas que chegam sem imagem.
+const ICONE_CATEGORIA: Record<Categoria, string> = {
+  espaço: "🛰️",
+  tecnologia: "⚡",
+  física: "⚛️",
+  biologia: "🧬",
+  ia: "🤖",
 };
 
 // Formata a data ISO (AAAA-MM-DD) pra um texto curto em pt-BR, ex.:
@@ -67,6 +89,15 @@ function formatarData(dataISO: string): string {
 // renderização.)
 function curtidasIniciais(indice: number): number {
   return 120 + ((indice * 137) % 880);
+}
+
+// "Prova social": quantas pessoas estão explorando esta notícia agora.
+// Número estável derivado do slug (não pisca a cada render) — quando o
+// site tiver tráfego real, trocamos por presença de verdade.
+function exploradoresAgora(slug: string): number {
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) | 0;
+  return 40 + ((h >>> 0) % 460);
 }
 
 // Quem NÃO está logado pode curtir até este limite; da próxima em diante,
@@ -105,7 +136,7 @@ export default function NoticiaImersiva({
   curtidaInicial,
   salvoInicial,
 }: {
-  noticia: Noticia;
+  noticia: NoticiaFeed;
   indice: number;
   usuarioId: string | null; // id do usuário logado, ou null se anônimo
   curtidaInicial: boolean; // já curtiu esta notícia? (vem do banco)
@@ -211,6 +242,54 @@ export default function NoticiaImersiva({
   // o componente PainelComentarios. Aqui só controlamos abrir/fechar,
   // pelo estado mostrarComentarios (no clique do botão). Ver comentários
   // é público; postar/curtir exige login (tratado dentro do painel).
+
+  // --- TEMPO DE ATENÇÃO (watch time) ---------------------------------
+  // O sinal favorito do TikTok: se a pessoa PAROU nesta notícia por 2s
+  // (60% dela visível na tela), registramos uma 'visualizacao'. O banco
+  // ignora repetições (índice único), então cada notícia conta uma vez
+  // por usuário — sem inundar a tabela a cada scroll.
+  useEffect(() => {
+    if (!usuarioId) return; // anônimo: nada de gravar
+    const secao = secaoRef.current;
+    if (!secao) return;
+
+    let timer: number | null = null;
+    let registrada = false;
+
+    const observador = new IntersectionObserver(
+      ([entrada]) => {
+        if (entrada.isIntersecting && !registrada) {
+          timer = window.setTimeout(() => {
+            registrada = true;
+            supabaseRef
+              .current!.from("interacoes")
+              .insert({
+                user_id: usuarioId,
+                noticia_slug: noticia.slug,
+                categoria: noticia.categoria,
+                tipo: "visualizacao",
+              })
+              .then(() => {
+                // repetição cai no índice único e vem como erro — ok ignorar
+              });
+          }, 2000);
+        } else if (timer !== null) {
+          // saiu da tela antes dos 2s: não conta como atenção
+          window.clearTimeout(timer);
+          timer = null;
+        }
+      },
+      { threshold: 0.6 }
+    );
+    observador.observe(secao);
+
+    return () => {
+      observador.disconnect();
+      if (timer !== null) window.clearTimeout(timer);
+    };
+  }, [usuarioId, noticia.slug, noticia.categoria]);
+
+  const cor = COR_CATEGORIA[noticia.categoria];
 
   useEffect(() => {
     const secao = secaoRef.current;
@@ -321,18 +400,37 @@ export default function NoticiaImersiva({
         style={{ transformStyle: "preserve-3d" }}
       >
         {/* CAMADA DO SCROLL: dentro da do cursor, recebe o parallax +
-            zoom. A imagem em si cobre tudo (object-cover). */}
+            zoom. A imagem em si cobre tudo (object-cover). Se a notícia
+            agregada veio SEM imagem, mostramos um visual reserva: um
+            degradê na cor da categoria + o símbolo dela gigante. */}
         <div ref={camadaScrollRef} className="absolute inset-0 will-change-transform">
-          <Image
-            src={noticia.imagem}
-            alt={noticia.manchete}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            // A primeira notícia carrega com prioridade (aparece cedo);
-            // as outras carregam sob demanda (lazy), economizando banda.
-            priority={indice === 0}
-          />
+          {noticia.imagem ? (
+            <Image
+              src={noticia.imagem}
+              alt={noticia.manchete}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              // A primeira notícia carrega com prioridade (aparece cedo);
+              // as outras carregam sob demanda (lazy), economizando banda.
+              priority={indice === 0}
+            />
+          ) : (
+            <div
+              className="flex h-full w-full items-center justify-center"
+              style={{
+                background: `radial-gradient(ellipse at 50% 35%, ${cor}33 0%, ${cor}14 40%, transparent 75%)`,
+              }}
+            >
+              <span
+                aria-hidden="true"
+                className="select-none text-[10rem] opacity-25 md:text-[16rem]"
+                style={{ filter: `drop-shadow(0 0 60px ${cor})` }}
+              >
+                {ICONE_CATEGORIA[noticia.categoria]}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -355,15 +453,25 @@ export default function NoticiaImersiva({
       {/* BLOCO DE TEXTO + INTERAÇÕES, ancorado embaixo. */}
       <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 pb-16 md:pb-24">
         <div ref={textoRef}>
-          {/* Régua + categoria + data */}
-          <div className="mb-3 flex items-center gap-3">
-            <span className="h-px w-10 bg-[var(--accent)]" />
-            <span className="font-telemetry text-xs tracking-[0.25em] text-[var(--accent)] uppercase">
+          {/* Régua + categoria (na cor dela) + data + EM ALTA + fonte */}
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <span className="h-px w-10" style={{ backgroundColor: cor }} />
+            <span
+              className="font-telemetry text-xs tracking-[0.25em] uppercase"
+              style={{ color: cor }}
+            >
               {ROTULO_CATEGORIA[noticia.categoria]}
             </span>
             <span className="font-telemetry text-xs tracking-[0.15em] text-[var(--text-dim)] uppercase">
               {formatarData(noticia.dataISO)}
             </span>
+            {/* Escassez/novidade: as 3 primeiras posições do SEU feed
+                são o que está bombando — o cérebro adora "agora". */}
+            {indice < 3 && (
+              <span className="font-telemetry rounded-full border border-orange-400/40 bg-orange-500/10 px-2.5 py-0.5 text-[10px] tracking-[0.2em] text-orange-300 uppercase">
+                🔥 em alta
+              </span>
+            )}
           </div>
 
           <h2 className="font-display text-2xl font-bold tracking-[0.01em] text-[var(--text)] drop-shadow-lg md:text-4xl">
@@ -373,6 +481,28 @@ export default function NoticiaImersiva({
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--text-dim)] drop-shadow md:text-lg">
             {noticia.resumo}
           </p>
+
+          {/* Prova social (pessoas aqui agora) + crédito da fonte — o
+              crédito com link é o que torna o modelo agregador legal. */}
+          <div className="font-telemetry mt-3 flex flex-wrap items-center gap-4 text-[11px] tracking-[0.15em] text-[var(--text-dim)] uppercase">
+            <span className="flex items-center gap-1.5">
+              <span
+                className="pulso-sinal inline-block h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: cor }}
+              />
+              {exploradoresAgora(noticia.slug)} explorando agora
+            </span>
+            {noticia.fonteNome && noticia.urlFonte && (
+              <a
+                href={noticia.urlFonte}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pointer-events-auto underline-offset-4 transition hover:text-[var(--text)] hover:underline"
+              >
+                ler na fonte: {noticia.fonteNome} ↗
+              </a>
+            )}
+          </div>
         </div>
 
         {/* BARRA DE INTERAÇÕES ------------------------------------- */}

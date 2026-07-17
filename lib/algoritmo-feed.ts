@@ -19,12 +19,19 @@
  * ---------------------------------------------------------------
  */
 
-import type { Noticia, Categoria } from "@/content/noticias";
+import type { Categoria } from "@/content/noticias";
+import type { NoticiaFeed } from "@/lib/tipos-feed";
 
 // Peso de cada tipo de interação. Salvar e comentar valem mais que
-// curtir — são esforços maiores, logo sinais de interesse mais fortes
-// (mesma lógica das big techs: engajamento "profundo" pesa mais).
-const PESO: Record<"curtida" | "comentario" | "salvo", number> = {
+// curtir — são esforços maiores, logo sinais de interesse mais fortes.
+// A VISUALIZAÇÃO (ficar um tempo olhando a notícia) é o sinal mais
+// fraco individualmente, mas é o que o TikTok mais usa: em volume, o
+// "tempo de atenção" revela o gosto melhor que qualquer clique.
+const PESO: Record<
+  "curtida" | "comentario" | "salvo" | "visualizacao",
+  number
+> = {
+  visualizacao: 0.5,
   curtida: 1,
   comentario: 2,
   salvo: 3,
@@ -32,7 +39,7 @@ const PESO: Record<"curtida" | "comentario" | "salvo", number> = {
 
 export type SinalInteracao = {
   categoria: Categoria;
-  tipo: "curtida" | "comentario" | "salvo";
+  tipo: "curtida" | "comentario" | "salvo" | "visualizacao";
   quando: string; // data/hora ISO em que a interação aconteceu
 };
 
@@ -64,13 +71,13 @@ export function calcularAfinidades(
 // (aleatoriedade pequena). Sem sinais (visitante novo), a afinidade é 0
 // e o feed cai no frescor — ou seja, mostra as mais recentes primeiro.
 export function ordenarFeed(
-  noticias: Noticia[],
+  noticias: NoticiaFeed[],
   sinais: SinalInteracao[]
-): Noticia[] {
+): NoticiaFeed[] {
   const afinidade = calcularAfinidades(sinais);
   const agora = Date.now();
 
-  function pontuar(n: Noticia): number {
+  function pontuar(n: NoticiaFeed): number {
     const afin = afinidade.get(n.categoria) ?? 0;
 
     // Frescor: 1 (bem nova) → 0 (com ~4 meses). Dá um empurrão às novas.
