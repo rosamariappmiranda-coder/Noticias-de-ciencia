@@ -36,7 +36,7 @@ export default function FormularioAuth({
           onClick={() => setModo("entrar")}
           className={`rounded-full py-2 text-sm transition ${
             !ehCadastro
-              ? "bg-[var(--accent)] font-medium text-black"
+              ? "botao-gradiente font-medium"
               : "text-[var(--text-dim)] hover:text-[var(--text)]"
           }`}
         >
@@ -47,7 +47,7 @@ export default function FormularioAuth({
           onClick={() => setModo("cadastro")}
           className={`rounded-full py-2 text-sm transition ${
             ehCadastro
-              ? "bg-[var(--accent)] font-medium text-black"
+              ? "botao-gradiente font-medium"
               : "text-[var(--text-dim)] hover:text-[var(--text)]"
           }`}
         >
@@ -92,7 +92,7 @@ export default function FormularioAuth({
 
         <button
           type="submit"
-          className="mt-1 rounded-xl bg-[var(--accent)] py-3 text-sm font-medium text-black transition hover:brightness-110 active:scale-[0.98]"
+          className="botao-gradiente mt-1 rounded-xl py-3 text-sm font-medium"
         >
           {ehCadastro ? "Criar minha conta" : "Entrar"}
         </button>

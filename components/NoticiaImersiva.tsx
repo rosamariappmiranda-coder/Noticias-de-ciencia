@@ -474,42 +474,57 @@ export default function NoticiaImersiva({
         {String(indice + 1).padStart(2, "0")}
       </span>
 
-      {/* BLOCO DE TEXTO + INTERAÇÕES, ancorado embaixo. */}
-      <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 pb-16 md:pb-24">
+      {/* O POST: card de vidro ancorado embaixo, com cabeçalho de
+          "autor" (a fonte), conteúdo e ações — anatomia de rede
+          social, acabamento de vidro. */}
+      <div className="relative z-10 mx-auto w-full max-w-2xl px-4 pb-12 md:pb-16">
+        <div className="vidro flex flex-col gap-4 rounded-3xl p-5 md:p-7">
         <div ref={textoRef}>
-          {/* Régua + categoria (na cor dela) + data + EM ALTA + fonte */}
-          <div className="mb-3 flex flex-wrap items-center gap-3">
-            <span className="h-px w-10" style={{ backgroundColor: cor }} />
+          {/* Cabeçalho do post: quem publicou + quando + status */}
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            {/* "Avatar" da fonte: inicial sobre a cor da categoria */}
             <span
-              className="font-telemetry text-xs tracking-[0.25em] uppercase"
-              style={{ color: cor }}
+              aria-hidden="true"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
+              style={{
+                background: `linear-gradient(135deg, ${cor}, ${cor}66)`,
+              }}
             >
-              {ROTULO_CATEGORIA[noticia.categoria]}
+              {(noticia.fonteNome ?? "NEXO").charAt(0)}
             </span>
-            <span className="font-telemetry text-xs tracking-[0.15em] text-[var(--text-dim)] uppercase">
-              {formatarData(noticia.dataISO)}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-[var(--text)]">
+                {noticia.fonteNome ?? "NEXO Editorial"}
+              </span>
+              <span className="font-telemetry text-[10px] tracking-[0.2em] text-[var(--text-dim)] uppercase">
+                <span style={{ color: cor }}>
+                  {ROTULO_CATEGORIA[noticia.categoria]}
+                </span>
+                {" · "}
+                {formatarData(noticia.dataISO)}
+              </span>
+            </div>
             {/* Escassez/novidade: as 3 primeiras posições do SEU feed
                 são o que está bombando — o cérebro adora "agora". */}
             {indice < 3 && (
-              <span className="font-telemetry flex items-center gap-1.5 rounded-full border border-orange-400/30 bg-orange-500/10 px-2.5 py-0.5 text-[10px] tracking-[0.2em] text-orange-300 uppercase">
+              <span className="font-telemetry ml-auto flex items-center gap-1.5 rounded-full border border-orange-400/30 bg-orange-500/10 px-2.5 py-1 text-[10px] tracking-[0.2em] text-orange-300 uppercase">
                 <span className="pulso-sinal inline-block h-1 w-1 rounded-full bg-orange-300" />
                 em alta
               </span>
             )}
           </div>
 
-          <h2 className="font-display text-2xl font-bold tracking-[0.01em] text-[var(--text)] drop-shadow-lg md:text-4xl">
+          <h2 className="font-display text-xl font-bold tracking-[0.01em] text-[var(--text)] md:text-3xl">
             {noticia.manchete}
           </h2>
 
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--text-dim)] drop-shadow md:text-lg">
+          <p className="mt-2.5 text-sm leading-relaxed text-[var(--text-dim)] md:text-base">
             {noticia.resumo}
           </p>
 
           {/* Prova social (pessoas aqui agora) + crédito da fonte — o
               crédito com link é o que torna o modelo agregador legal. */}
-          <div className="font-telemetry mt-3 flex flex-wrap items-center gap-4 text-[11px] tracking-[0.15em] text-[var(--text-dim)] uppercase">
+          <div className="font-telemetry mt-3.5 flex flex-wrap items-center gap-4 text-[10px] tracking-[0.15em] text-[var(--text-dim)] uppercase">
             <span className="flex items-center gap-1.5">
               <span
                 className="pulso-sinal inline-block h-1.5 w-1.5 rounded-full"
@@ -524,7 +539,7 @@ export default function NoticiaImersiva({
                 rel="noopener noreferrer"
                 className="pointer-events-auto underline-offset-4 transition hover:text-[var(--text)] hover:underline"
               >
-                ler na fonte: {noticia.fonteNome} ↗
+                ler na fonte ↗
               </a>
             )}
           </div>
@@ -616,6 +631,7 @@ export default function NoticiaImersiva({
             aoExigirLogin={() => setPortao("comentar")}
           />
         )}
+        </div>
       </div>
 
       {/* PORTÃO (popup gentil): aparece quando alguém sem login tenta
@@ -630,7 +646,7 @@ export default function NoticiaImersiva({
             onClick={() => setPortao(null)}
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
           />
-          <div className="relative w-full max-w-sm rounded-3xl border border-white/10 bg-[var(--surface)] p-7 text-center">
+          <div className="vidro relative w-full max-w-sm rounded-3xl p-7 text-center">
             <p className="font-display text-lg font-bold text-[var(--text)]">
               {MENSAGEM_PORTAO[portao]}
             </p>
@@ -639,7 +655,7 @@ export default function NoticiaImersiva({
             </p>
             <a
               href="/login"
-              className="mt-5 block rounded-xl bg-[var(--accent)] py-3 text-sm font-medium text-black transition hover:brightness-110"
+              className="botao-gradiente mt-5 block rounded-xl py-3 text-sm font-medium"
             >
               Criar conta / Entrar
             </a>

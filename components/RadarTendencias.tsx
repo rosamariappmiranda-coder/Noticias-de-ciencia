@@ -32,7 +32,8 @@ export default function RadarTendencias({
   const maximo = Math.max(...tendencias.map((t) => t.mencoes));
 
   return (
-    <section className="relative z-10 mx-auto w-full max-w-4xl px-6 py-24 md:py-32">
+    <section className="relative z-10 mx-auto w-full max-w-4xl px-4 py-24 md:px-6 md:py-32">
+      <div className="vidro rounded-3xl p-6 md:p-10">
       {/* Cabeçalho do painel */}
       <div className="mb-10 flex items-end justify-between border-b border-white/10 pb-4">
         <div>
@@ -99,6 +100,7 @@ export default function RadarTendencias({
           </li>
         ))}
       </ol>
+      </div>
     </section>
   );
 }

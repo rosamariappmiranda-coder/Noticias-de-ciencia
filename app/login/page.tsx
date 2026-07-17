@@ -25,7 +25,7 @@ export default async function LoginPage({
     <main className="relative flex min-h-screen items-center justify-center px-6 py-16">
       <StarField />
 
-      <div className="relative z-10 w-full max-w-sm rounded-3xl border border-white/10 bg-black/50 p-8 backdrop-blur-md">
+      <div className="vidro relative z-10 w-full max-w-sm rounded-3xl p-8">
         <Link
           href="/"
           className="font-telemetry text-xs tracking-[0.2em] text-[var(--text-dim)] uppercase transition hover:text-[var(--text)]"

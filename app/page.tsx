@@ -3,6 +3,7 @@ import SmoothScrollProvider from "@/components/SmoothScrollProvider";
 import HeroHelix from "@/components/HeroHelix";
 import FeedNoticias from "@/components/FeedNoticias";
 import BarraProgresso from "@/components/BarraProgresso";
+import FundoAurora from "@/components/FundoAurora";
 import RadarTendencias from "@/components/RadarTendencias";
 import { extrairTendencias } from "@/lib/tendencias";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -127,6 +128,10 @@ export default async function Home() {
       {/* Céu de estrelas fixo, atrás de tudo. É ele que "aparece"
           quando o canvas do foguete se dissolve. */}
       <StarField />
+
+      {/* Aurora: manchas de cor desfocadas respirando atrás do
+          conteúdo — profundidade premium, sem distrair. */}
+      <FundoAurora />
 
       {/* O hero: o foguete tocando pelo scroll e, no fim, sumindo pra
           revelar o feed diretamente. */}

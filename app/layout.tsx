@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Chakra_Petch, Sora, IBM_Plex_Mono } from "next/font/google";
 import GrainOverlay from "@/components/GrainOverlay";
-import BarraUsuario from "@/components/BarraUsuario";
+import BarraNav from "@/components/BarraNav";
 import "./globals.css";
 
 // Etapa "Feed Reels" (12/07/2026): o SmoothScrollProvider (Lenis)
@@ -44,7 +44,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Seu feed de conhecimento",
+  title: "NEXO — seu feed de conhecimento",
   description:
     "Ciência, espaço e tecnologia — um feed personalizado que aprende com você.",
   // Pede pro Google Tradutor NÃO traduzir o site. Tradutores automáticos
@@ -66,9 +66,10 @@ export default function RootLayout({
       >
         {children}
 
-        {/* Cantinho de login/usuário, fixo no topo direito em todas as
-            páginas (mostra "Entrar" ou "Olá, <nome>" + Sair). */}
-        <BarraUsuario />
+        {/* Navbar de vidro fixa no topo em todas as páginas: a marca à
+            esquerda e a área do usuário (Entrar / avatar + Sair) à
+            direita. */}
+        <BarraNav />
 
         {/* Grão de filme por cima de tudo (menos da contagem
             regressiva, que tem z-index ainda mais alto). */}

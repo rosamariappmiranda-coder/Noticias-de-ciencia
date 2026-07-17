@@ -32,17 +32,27 @@ export default async function BarraUsuario() {
     nome = perfil?.nome ?? user.email ?? null;
   }
 
+  // Vive DENTRO da BarraNav (navbar de vidro) — sem posicionamento
+  // próprio, só a fileira de elementos do usuário.
   return (
-    <div className="fixed top-3 right-3 z-50 flex items-center gap-2">
+    <div className="flex items-center gap-2.5">
       {user ? (
         <>
-          <span className="font-telemetry rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-xs tracking-[0.1em] text-[var(--text)] uppercase backdrop-blur-sm">
-            Olá, {nome}
+          {/* "Avatar" com a inicial do nome, em gradiente — identidade
+              visual de rede social sem precisar de foto ainda. */}
+          <span
+            aria-hidden="true"
+            className="botao-gradiente flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold"
+          >
+            {(nome ?? "?").charAt(0).toUpperCase()}
+          </span>
+          <span className="hidden text-sm text-[var(--text)] sm:inline">
+            {nome}
           </span>
           <form action={sair}>
             <button
               type="submit"
-              className="font-telemetry rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-xs tracking-[0.1em] text-[var(--text-dim)] uppercase backdrop-blur-sm transition hover:text-[var(--text)]"
+              className="font-telemetry eleva rounded-full border border-white/10 px-3 py-1.5 text-[10px] tracking-[0.15em] text-[var(--text-dim)] uppercase hover:border-white/25 hover:text-[var(--text)]"
             >
               Sair
             </button>
@@ -54,7 +64,7 @@ export default async function BarraUsuario() {
         // mesmo com as animações pesadas de scroll (GSAP) na página.
         <a
           href="/login"
-          className="font-telemetry rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-1.5 text-xs tracking-[0.1em] text-[var(--text)] uppercase backdrop-blur-sm transition hover:bg-[var(--accent)]/20"
+          className="botao-gradiente rounded-full px-5 py-1.5 text-sm font-medium"
         >
           Entrar
         </a>

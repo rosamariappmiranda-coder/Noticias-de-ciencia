@@ -9,12 +9,19 @@
  * troca aqui e muda em todo lugar de uma vez.
  */
 :root {
-  --bg: #05060b; /* fundo principal do site — quase preto, com leve azul */
+  --bg: #040407; /* fundo principal — preto profundo com traço violeta */
   --surface: #0a0d16; /* fundo de seções "elevadas" (cards, painéis) */
-  --text: #edf1fa; /* texto principal — branco levemente azulado */
-  --text-dim: rgba(237, 241, 250, 0.6); /* texto secundário, mais apagado */
-  --accent: #5b8cff; /* azul de destaque — usar para quase tudo */
+  --text: #f2f4fb; /* texto principal — branco levemente azulado */
+  --text-dim: rgba(242, 244, 251, 0.55); /* texto secundário, mais apagado */
+  --accent: #5b8cff; /* azul de destaque */
+  --accent-2: #a78bfa; /* violeta — par do azul nos gradientes */
   --exhaust: #ffb56b; /* âmbar — EXCLUSIVO do fogo/motor do foguete */
+
+  /* Vidro (glassmorphism): os três ingredientes do efeito, em um lugar
+     só pra manter TODOS os painéis do site idênticos. */
+  --vidro-fundo: rgba(255, 255, 255, 0.04);
+  --vidro-borda: rgba(255, 255, 255, 0.08);
+  --vidro-brilho: rgba(255, 255, 255, 0.12); /* borda superior iluminada */
 }
 
 /* Conecta nossos tokens às variáveis que o Tailwind 4 usa por baixo
@@ -49,6 +56,85 @@ body {
 
 .font-telemetry {
   font-family: var(--font-mono), monospace;
+}
+
+/* ==================================================================
+ * Design system "NEXO" — vidro, gradientes e micro-animações
+ * ------------------------------------------------------------------
+ * O vocabulário visual premium do site. Três peças-chave:
+ *   .vidro            → painel de glassmorphism (blur + borda fina)
+ *   .botao-gradiente  → o ÚNICO botão colorido do site (CTA principal)
+ *   .eleva            → micro-animação de hover (sobe 2px + brilha)
+ * ================================================================== */
+
+.vidro {
+  background: var(--vidro-fundo);
+  border: 1px solid var(--vidro-borda);
+  border-top-color: var(--vidro-brilho); /* luz vindo de cima */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.botao-gradiente {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  color: #fff;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+.botao-gradiente:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 30px rgba(91, 140, 255, 0.35);
+}
+.botao-gradiente:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.eleva {
+  transition:
+    transform 0.25s ease,
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.eleva:hover {
+  transform: translateY(-2px);
+}
+
+/* Texto em degradê azul→violeta (títulos de impacto). */
+.texto-gradiente {
+  background: linear-gradient(115deg, #fff 20%, var(--accent) 60%, var(--accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Aurora de fundo: duas manchas de cor desfocadas que "respiram"
+   devagar atrás de tudo — profundidade sem distrair. */
+@keyframes deriva-aurora {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(4%, -3%) scale(1.08); }
+}
+@keyframes deriva-aurora-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-5%, 4%) scale(1.05); }
+}
+.aurora-1 {
+  animation: deriva-aurora 26s ease-in-out infinite;
+}
+.aurora-2 {
+  animation: deriva-aurora-2 32s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-1, .aurora-2 {
+    animation: none;
+  }
+  .eleva:hover, .botao-gradiente:hover {
+    transform: none;
+  }
 }
 
 /* Animação de entrada do texto nos slides do feed (ReelsFeed) ----

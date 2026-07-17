@@ -58,9 +58,9 @@ export default function FeedNoticias({
         </p>
         <a
           href="#topo"
-          className="font-telemetry mt-8 rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-6 py-3 text-xs tracking-[0.25em] text-[var(--text)] uppercase transition hover:bg-[var(--accent)]/20"
+          className="botao-gradiente font-telemetry mt-8 rounded-full px-7 py-3 text-xs tracking-[0.25em] uppercase"
         >
-          ↑ decolar de novo
+          decolar de novo
         </a>
       </section>
     </div>
