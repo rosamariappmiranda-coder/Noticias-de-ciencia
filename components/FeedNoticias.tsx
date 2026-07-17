@@ -46,10 +46,10 @@ export default function FeedNoticias({
           "Zeigarnik": lembrar a pessoa de que amanhã tem mais mantém a
           história em aberto na cabeça dela). */}
       <section className="relative flex min-h-[70vh] w-full flex-col items-center justify-center px-6 text-center">
-        <p className="font-telemetry text-xs tracking-[0.35em] text-[var(--accent)] uppercase">
-          transmissão de hoje encerrada
+        <p className="font-telemetry text-xs text-[var(--accent)] uppercase">
+          Transmissão de hoje encerrada
         </p>
-        <h2 className="font-display mt-4 max-w-xl text-3xl font-bold text-[var(--text)] md:text-5xl">
+        <h2 className="font-display mt-4 max-w-xl text-3xl font-bold tracking-[-0.02em] text-[var(--text)] md:text-5xl">
           Você zerou o feed. O universo, não.
         </h2>
         <p className="mt-4 max-w-md text-base text-[var(--text-dim)]">
@@ -58,9 +58,9 @@ export default function FeedNoticias({
         </p>
         <a
           href="#topo"
-          className="botao-gradiente font-telemetry mt-8 rounded-full px-7 py-3 text-xs tracking-[0.25em] uppercase"
+          className="botao-gradiente mt-8 rounded-full px-7 py-3 text-sm font-medium"
         >
-          decolar de novo
+          Decolar de novo
         </a>
       </section>
     </div>

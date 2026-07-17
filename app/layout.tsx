@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Chakra_Petch, Sora, IBM_Plex_Mono } from "next/font/google";
+import { Space_Grotesk, Inter } from "next/font/google";
 import GrainOverlay from "@/components/GrainOverlay";
 import BarraNav from "@/components/BarraNav";
 import "./globals.css";
@@ -21,26 +21,24 @@ import "./globals.css";
  * qual fonte aplicar em cada texto.
  */
 
-// Fonte de destaque: títulos grandes e números de telemetria.
-// Traços retos e técnicos — clima de painel de nave espacial.
-const chakraPetch = Chakra_Petch({
+// SISTEMA TIPOGRÁFICO — só DUAS famílias, pra tudo "ornar":
+//
+//   Space Grotesk → títulos, marca, rótulos e números (a fonte dos
+//                   produtos premium atuais: geométrica e moderna)
+//   Inter         → corpo de texto (a referência em legibilidade)
+//
+// As classes .font-display e .font-telemetry (globals.css) apontam
+// AMBAS pra Space Grotesk — rótulo e título são a mesma voz, mudando
+// só tamanho/peso/espaçamento. É isso que faz o site parecer UM.
+const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: ["400", "500", "700"],
 });
 
-// Fonte de corpo: usada por padrão em parágrafos e textos comuns.
-const sora = Sora({
+const inter = Inter({
   variable: "--font-body",
   subsets: ["latin"],
-});
-
-// Fonte "telemetria": dados técnicos estilo HUD (painel de dados
-// sobreposto), monoespaçada — todo caractere tem a mesma largura.
-const ibmPlexMono = IBM_Plex_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -62,7 +60,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" translate="no">
       <body
-        className={`${chakraPetch.variable} ${sora.variable} ${ibmPlexMono.variable} antialiased`}
+        className={`${spaceGrotesk.variable} ${inter.variable} antialiased`}
       >
         {children}
 

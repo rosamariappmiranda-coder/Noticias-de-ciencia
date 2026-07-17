@@ -37,14 +37,14 @@ export default function RadarTendencias({
       {/* Cabeçalho do painel */}
       <div className="mb-10 flex items-end justify-between border-b border-white/10 pb-4">
         <div>
-          <p className="font-telemetry text-[10px] tracking-[0.4em] text-[var(--accent)] uppercase">
-            radar
+          <p className="font-telemetry text-[11px] text-[var(--accent)] uppercase">
+            Radar
           </p>
-          <h2 className="font-display mt-2 text-2xl font-bold tracking-[0.02em] text-[var(--text)] uppercase md:text-4xl">
+          <h2 className="font-display mt-2 text-2xl font-bold tracking-[-0.02em] text-[var(--text)] md:text-4xl">
             O que o mundo está discutindo
           </h2>
         </div>
-        <p className="font-telemetry hidden text-right text-[10px] leading-relaxed tracking-[0.2em] text-[var(--text-dim)] uppercase sm:block">
+        <p className="font-telemetry hidden text-right text-[10px] leading-relaxed text-[var(--text-dim)] uppercase sm:block">
           cobertura das últimas 24h
           <br />
           {tendencias.reduce((s, t) => s + t.mencoes, 0)} matérias analisadas
@@ -73,7 +73,7 @@ export default function RadarTendencias({
                   {t.termo}
                 </h3>
                 <span
-                  className="font-telemetry text-[10px] tracking-[0.25em] uppercase"
+                  className="font-telemetry text-[10px] uppercase"
                   style={{ color: COR[t.categoria] }}
                 >
                   {t.categoria}
@@ -93,7 +93,7 @@ export default function RadarTendencias({
               </div>
 
               {/* Quem está cobrindo */}
-              <p className="font-telemetry mt-2 truncate text-[11px] tracking-[0.1em] text-[var(--text-dim)]">
+              <p className="font-telemetry mt-2 truncate text-[11px] normal-case tracking-normal text-[var(--text-dim)]">
                 {t.mencoes} matérias · {t.portais.join(" · ")}
               </p>
             </div>

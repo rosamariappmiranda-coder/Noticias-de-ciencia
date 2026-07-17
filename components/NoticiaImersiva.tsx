@@ -514,7 +514,7 @@ export default function NoticiaImersiva({
             )}
           </div>
 
-          <h2 className="font-display text-xl font-bold tracking-[0.01em] text-[var(--text)] md:text-3xl">
+          <h2 className="font-display text-xl leading-tight font-bold tracking-[-0.015em] text-[var(--text)] md:text-3xl">
             {noticia.manchete}
           </h2>
 

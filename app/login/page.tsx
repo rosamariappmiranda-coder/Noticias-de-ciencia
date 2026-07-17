@@ -33,11 +33,11 @@ export default async function LoginPage({
           ← voltar ao feed
         </Link>
 
-        <h1 className="font-display mt-6 text-2xl font-bold tracking-[0.06em] text-[var(--text)] uppercase">
-          Notícias das Estrelas
+        <h1 className="font-display mt-6 text-3xl font-bold tracking-[-0.02em] text-[var(--text)]">
+          NEX<span className="texto-gradiente">O</span>
         </h1>
-        <p className="font-telemetry mt-1 mb-6 text-xs tracking-[0.15em] text-[var(--text-dim)] uppercase">
-          entre pra ter um feed só seu
+        <p className="mt-1.5 mb-6 text-sm text-[var(--text-dim)]">
+          Entre para ter um feed só seu.
         </p>
 
         {/* Mensagem de erro (vermelha) ou de sucesso (azul), quando a

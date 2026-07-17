@@ -374,31 +374,26 @@ export default function HeroHelix() {
       >
         {/* Etiqueta "HUD" — a marca, discreta, como assinatura de
             transmissão. */}
-        <div className="font-telemetry mb-6 flex items-center gap-3 text-[10px] tracking-[0.4em] text-[var(--accent)] uppercase sm:text-xs">
+        <div className="font-telemetry mb-6 flex items-center gap-2.5 text-[11px] text-[var(--accent)] uppercase">
           <span className="pulso-sinal inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-          seu feed de conhecimento · ao vivo
+          Ao vivo
         </div>
 
-        {/* Título com texto em degradê + brilho (glow) azul. */}
-        <h1 className="font-display text-4xl leading-[1.04] font-bold tracking-[0.01em] uppercase drop-shadow-[0_0_25px_rgba(91,140,255,0.35)] md:text-7xl">
-          <span className="bg-gradient-to-b from-white via-white to-[var(--accent)] bg-clip-text text-transparent">
-            O futuro chega
-          </span>
-          <br />
-          <span className="bg-gradient-to-b from-[var(--accent)] to-white bg-clip-text text-transparent">
-            aqui primeiro.
-          </span>
+        {/* Título em sentence case (nada de caixa alta) — como os sites
+            sofisticados. Degradê branco→azul→violeta. */}
+        <h1 className="font-display max-w-3xl text-4xl leading-[1.05] font-bold tracking-[-0.02em] drop-shadow-[0_0_30px_rgba(91,140,255,0.25)] md:text-7xl">
+          <span className="texto-gradiente">O futuro chega aqui primeiro.</span>
         </h1>
 
-        <p className="mt-6 max-w-md text-sm leading-relaxed text-[var(--text-dim)] md:text-base">
+        <p className="mt-6 max-w-md text-base leading-relaxed text-[var(--text-dim)]">
           As descobertas, tendências e ideias que estão redesenhando o
           mundo — escolhidas pra você por um algoritmo que aprende o que
           te move.
         </p>
 
         {/* Convite pra rolar (pulsa suave). */}
-        <div className="font-telemetry mt-10 flex flex-col items-center gap-2 text-[10px] tracking-[0.3em] text-[var(--text-dim)] uppercase">
-          arrasta pra decolar
+        <div className="font-telemetry mt-10 flex flex-col items-center gap-2 text-[11px] text-[var(--text-dim)] uppercase">
+          Arraste para decolar
           <span className="pulso-sinal text-base">↓</span>
         </div>
       </div>

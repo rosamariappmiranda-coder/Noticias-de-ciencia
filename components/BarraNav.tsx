@@ -19,11 +19,11 @@ export default function BarraNav() {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5">
         {/* Marca */}
         <a href="/" className="group flex items-baseline gap-3">
-          <span className="font-display text-lg font-bold tracking-[0.22em] text-[var(--text)] uppercase">
+          <span className="font-display text-xl font-bold tracking-[-0.01em] text-[var(--text)]">
             NEX<span className="texto-gradiente">O</span>
           </span>
-          <span className="font-telemetry hidden text-[9px] tracking-[0.3em] text-[var(--text-dim)] uppercase transition-colors group-hover:text-[var(--text)] sm:inline">
-            seu feed de conhecimento
+          <span className="font-telemetry hidden text-[10px] text-[var(--text-dim)] uppercase transition-colors group-hover:text-[var(--text)] sm:inline">
+            Conhecimento
           </span>
         </a>
 

@@ -50,12 +50,17 @@ body {
 /* Classes utilitárias de fonte -----------------------------------
    Aplicam as outras duas fontes do projeto onde precisar, ex.:
    <h1 className="font-display">Título</h1> */
+/* Título e rótulo usam a MESMA fonte (Space Grotesk). A diferença
+   entre eles é só tamanho, peso e espaçamento — não família. É o que
+   dá unidade ao site. */
 .font-display {
   font-family: var(--font-display), sans-serif;
 }
 
 .font-telemetry {
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.18em; /* espaçamento ÚNICO dos micro-rótulos */
 }
 
 /* ==================================================================
