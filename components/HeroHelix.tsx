@@ -139,6 +139,11 @@ export default function HeroHelix() {
       const larguraCanvas = canvas!.width;
       const alturaCanvas = canvas!.height;
 
+      // Suavização de alta qualidade ao escalar os fotogramas — sem
+      // isso o navegador usa o modo rápido e a imagem fica serrilhada.
+      ctx!.imageSmoothingEnabled = true;
+      ctx!.imageSmoothingQuality = "high";
+
       ctx!.clearRect(0, 0, larguraCanvas, alturaCanvas);
 
       const aspectImagem = img.naturalWidth / img.naturalHeight;
@@ -346,6 +351,18 @@ export default function HeroHelix() {
         ref={canvasRef}
         aria-hidden="true"
         className="absolute inset-0 h-full w-full origin-center"
+      />
+
+      {/* Vinheta cinematográfica sobre o vídeo: escurece as bordas,
+          concentra o olhar no motor e disfarça a compressão do vídeo
+          original — truque padrão de colorista. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.6) 100%)",
+        }}
       />
 
       {/* Título de ABERTURA — hi-tech. Visível quando o site abre

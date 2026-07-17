@@ -38,6 +38,12 @@ import type { Categoria } from "@/content/noticias";
 import type { NoticiaFeed } from "@/lib/tipos-feed";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 import PainelComentarios from "./PainelComentarios";
+import {
+  IconeCoracao,
+  IconeComentario,
+  IconeMarcador,
+  IconeCompartilhar,
+} from "./Icones";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -62,14 +68,15 @@ const COR_CATEGORIA: Record<Categoria, string> = {
   ia: "#c79bff", // violeta — mistério
 };
 
-// Emoji-símbolo de cada categoria, usado no visual reserva das
-// notícias agregadas que chegam sem imagem.
-const ICONE_CATEGORIA: Record<Categoria, string> = {
-  espaço: "🛰️",
-  tecnologia: "⚡",
-  física: "⚛️",
-  biologia: "🧬",
-  ia: "🤖",
+// Palavra-símbolo de cada categoria, usada gigante e vazada (só
+// contorno) no visual reserva das notícias sem imagem — mesma
+// linguagem tipográfica do "número fantasma".
+const MARCA_CATEGORIA: Record<Categoria, string> = {
+  espaço: "ESPAÇO",
+  tecnologia: "TECH",
+  física: "FÍSICA",
+  biologia: "BIO",
+  ia: "IA",
 };
 
 // Formata a data ISO (AAAA-MM-DD) pra um texto curto em pt-BR, ex.:
@@ -124,9 +131,9 @@ function salvarCurtidasAnonimas(valor: number) {
 
 // Mensagem do "porteiro" conforme o que a pessoa tentou fazer sem login.
 const MENSAGEM_PORTAO: Record<"curtir" | "comentar" | "salvar", string> = {
-  curtir: "Você curtiu bastante! 🌟 Crie uma conta pra continuar curtindo.",
-  comentar: "Pra comentar, crie sua conta.",
-  salvar: "Pra salvar e ler depois, crie sua conta.",
+  curtir: "Seu gosto já apareceu. Crie uma conta pra o feed aprender com ele.",
+  comentar: "Entre pra entrar na conversa.",
+  salvar: "Entre pra guardar isso pra depois.",
 };
 
 export default function NoticiaImersiva({
@@ -317,10 +324,12 @@ export default function NoticiaImersiva({
       // rolagem (sem acelerar/desacelerar sozinho).
       gsap.fromTo(
         camadaScroll,
-        { yPercent: -8, scale: 1.18 },
+        // Zoom contido (1.10 → 1.02): quanto menos ampliamos a foto do
+        // portal, menos ela "estoura" os pixels — qualidade percebida.
+        { yPercent: -8, scale: 1.1 },
         {
           yPercent: 8,
-          scale: 1.06,
+          scale: 1.02,
           ease: "none",
           scrollTrigger: {
             trigger: secao,
@@ -410,6 +419,7 @@ export default function NoticiaImersiva({
               alt={noticia.manchete}
               fill
               sizes="100vw"
+              quality={90}
               className="object-cover"
               // A primeira notícia carrega com prioridade (aparece cedo);
               // as outras carregam sob demanda (lazy), economizando banda.
@@ -419,20 +429,34 @@ export default function NoticiaImersiva({
             <div
               className="flex h-full w-full items-center justify-center"
               style={{
-                background: `radial-gradient(ellipse at 50% 35%, ${cor}33 0%, ${cor}14 40%, transparent 75%)`,
+                background: `radial-gradient(ellipse at 50% 40%, ${cor}22 0%, ${cor}0d 45%, transparent 75%)`,
               }}
             >
               <span
                 aria-hidden="true"
-                className="select-none text-[10rem] opacity-25 md:text-[16rem]"
-                style={{ filter: `drop-shadow(0 0 60px ${cor})` }}
+                className="font-display select-none text-[22vw] leading-none font-bold tracking-tight md:text-[16vw]"
+                style={{
+                  color: "transparent",
+                  WebkitTextStroke: `1px ${cor}55`,
+                }}
               >
-                {ICONE_CATEGORIA[noticia.categoria]}
+                {MARCA_CATEGORIA[noticia.categoria]}
               </span>
             </div>
           )}
         </div>
       </div>
+
+      {/* Vinheta cinematográfica: escurece as bordas da imagem (foco no
+          centro e disfarça compressão de fotos de portal). */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%)",
+        }}
+      />
 
       {/* Véu escuro pra garantir legibilidade do texto por cima da foto
           (mais forte embaixo, onde fica o texto). */}
@@ -468,8 +492,9 @@ export default function NoticiaImersiva({
             {/* Escassez/novidade: as 3 primeiras posições do SEU feed
                 são o que está bombando — o cérebro adora "agora". */}
             {indice < 3 && (
-              <span className="font-telemetry rounded-full border border-orange-400/40 bg-orange-500/10 px-2.5 py-0.5 text-[10px] tracking-[0.2em] text-orange-300 uppercase">
-                🔥 em alta
+              <span className="font-telemetry flex items-center gap-1.5 rounded-full border border-orange-400/30 bg-orange-500/10 px-2.5 py-0.5 text-[10px] tracking-[0.2em] text-orange-300 uppercase">
+                <span className="pulso-sinal inline-block h-1 w-1 rounded-full bg-orange-300" />
+                em alta
               </span>
             )}
           </div>
@@ -520,7 +545,10 @@ export default function NoticiaImersiva({
                 : "border-white/15 text-[var(--text-dim)] hover:border-white/40 hover:text-[var(--text)]"
             }`}
           >
-            <span className="text-base">{curtiu ? "❤️" : "🤍"}</span>
+            <IconeCoracao
+              cheio={curtiu}
+              className={curtiu ? "text-[var(--accent)]" : ""}
+            />
             <span className="font-telemetry tabular-nums">{curtidas}</span>
           </button>
 
@@ -532,7 +560,7 @@ export default function NoticiaImersiva({
             aria-label="Comentar"
             className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-[var(--text-dim)] transition hover:border-white/40 hover:text-[var(--text)] active:scale-90"
           >
-            <span className="text-base">💬</span>
+            <IconeComentario />
             <span className="hidden sm:inline">Comentar</span>
           </button>
 
@@ -548,7 +576,10 @@ export default function NoticiaImersiva({
                 : "border-white/15 text-[var(--text-dim)] hover:border-white/40 hover:text-[var(--text)]"
             }`}
           >
-            <span className="text-base">{salvou ? "🔖" : "🏷️"}</span>
+            <IconeMarcador
+              cheio={salvou}
+              className={salvou ? "text-[var(--accent)]" : ""}
+            />
             <span className="hidden sm:inline">{salvou ? "Salvo" : "Salvar"}</span>
           </button>
 
@@ -568,9 +599,9 @@ export default function NoticiaImersiva({
             aria-label="Compartilhar"
             className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-[var(--text-dim)] transition hover:border-white/40 hover:text-[var(--text)] active:scale-90"
           >
-            <span className="text-base">↗️</span>
+            <IconeCompartilhar />
             <span className="hidden sm:inline">
-              {compartilhou ? "Copiado!" : "Compartilhar"}
+              {compartilhou ? "Copiado" : "Compartilhar"}
             </span>
           </button>
         </div>
@@ -604,7 +635,7 @@ export default function NoticiaImersiva({
               {MENSAGEM_PORTAO[portao]}
             </p>
             <p className="mt-2 text-sm text-[var(--text-dim)]">
-              Leva 10 segundos e o seu feed fica só do seu jeito. ✨
+              Leva dez segundos. O feed passa a ser seu.
             </p>
             <a
               href="/login"

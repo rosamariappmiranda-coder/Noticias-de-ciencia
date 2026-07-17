@@ -118,7 +118,9 @@ export default function FormularioAuth({
         title="Em breve — a gente configura o Google depois"
         className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-white/10 py-3 text-sm text-[var(--text-dim)] opacity-50"
       >
-        <span aria-hidden="true">🇬</span>
+        <span aria-hidden="true" className="font-display text-base font-bold">
+          G
+        </span>
         Entrar com Google (em breve)
       </button>
     </div>

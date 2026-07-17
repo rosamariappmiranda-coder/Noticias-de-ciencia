@@ -16,6 +16,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { criarClienteNavegador } from "@/lib/supabase/client";
+import { IconeCoracao, IconeExcluir } from "./Icones";
 
 type Comentario = {
   id: string;
@@ -211,7 +212,7 @@ export default function PainelComentarios({
         )}
         {!carregando && principais.length === 0 && (
           <p className="text-sm text-[var(--text-dim)]">
-            Nenhum comentário ainda. Seja a primeira pessoa a comentar! ✨
+            Ninguém comentou ainda. Comece a conversa.
           </p>
         )}
         {principais.map((c) => (
@@ -296,7 +297,7 @@ function ComentarioItem({
               : "text-[var(--text-dim)] hover:text-[var(--text)]"
           }`}
         >
-          <span>{c.euCurti ? "❤️" : "🤍"}</span>
+          <IconeCoracao cheio={c.euCurti} className="h-3.5 w-3.5" />
           {c.curtidas > 0 && <span className="tabular-nums">{c.curtidas}</span>}
         </button>
         {aoResponder && (
@@ -312,8 +313,10 @@ function ComentarioItem({
           <button
             type="button"
             onClick={aoExcluir}
-            className="text-xs text-[var(--text-dim)] transition hover:text-red-300"
+            aria-label="Excluir comentário"
+            className="flex items-center gap-1 text-xs text-[var(--text-dim)] transition hover:text-red-300"
           >
+            <IconeExcluir />
             Excluir
           </button>
         )}

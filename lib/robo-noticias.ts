@@ -62,6 +62,36 @@ const FONTES: Fonte[] = [
     fonteNome: "G1 Ciência e Saúde",
     categoriaPadrao: "biologia",
   },
+  {
+    url: "https://tecnoblog.net/feed/",
+    fonteNome: "Tecnoblog",
+    categoriaPadrao: "tecnologia",
+  },
+  {
+    url: "https://mittechreview.com.br/feed/",
+    fonteNome: "MIT Technology Review",
+    categoriaPadrao: "ia",
+  },
+  {
+    url: "https://revistapesquisa.fapesp.br/feed/",
+    fonteNome: "Revista Pesquisa FAPESP",
+    categoriaPadrao: "biologia",
+  },
+  {
+    url: "https://www.inovacaotecnologica.com.br/boletim/rss.xml",
+    fonteNome: "Inovação Tecnológica",
+    categoriaPadrao: "tecnologia",
+  },
+  {
+    url: "https://socientifica.com.br/feed/",
+    fonteNome: "Socientífica",
+    categoriaPadrao: "espaço",
+  },
+  {
+    url: "https://spacetoday.com.br/feed/",
+    fonteNome: "Space Today",
+    categoriaPadrao: "espaço",
+  },
 ];
 
 // Regras de categorização por palavra-chave (a primeira que bater vence).
@@ -213,6 +243,10 @@ const TERMOS_BLOQUEADOS = [
   // esporte
   "copa do mundo",
   "futebol",
+  // guias de compra e miscelânea editorial
+  "para comprar",
+  "folheie ou baixe",
+  "guerra",
 ];
 
 // Notícia velha não é "tendência": descartamos o que tem mais de 120
@@ -278,12 +312,15 @@ function extrairTag(bloco: string, tag: string): string {
   return m ? limparTexto(m[1]) : "";
 }
 
-// Primeira URL de imagem que aparecer dentro do item.
+// Primeira URL de imagem que aparecer dentro do item. Ignora
+// placeholders genéricos (ex.: o "icon_pdf" que o feed do MIT usa em
+// tudo) — melhor sem imagem (nosso visual reserva) do que com imagem
+// ruim repetida.
 function primeiraImagem(bloco: string): string | null {
-  const m = bloco.match(
-    /https?:\/\/[^"'\s<>]+\.(?:jpg|jpeg|png|webp)/i
-  );
-  return m ? m[0] : null;
+  const m = bloco.match(/https?:\/\/[^"'\s<>]+\.(?:jpg|jpeg|png|webp)/i);
+  if (!m) return null;
+  if (/icon_pdf|placeholder|logo/i.test(m[0])) return null;
+  return m[0];
 }
 
 // Transforma o título num "slug" (id amigável). Acrescenta um hash curto
@@ -317,7 +354,13 @@ async function buscarFonte(f: Fonte): Promise<ItemAgregado[]> {
       signal: AbortSignal.timeout(12000),
     });
     if (!resp.ok) return [];
-    const xml = await resp.text();
+    // Alguns feeds BR (ex.: Inovação Tecnológica) vêm em ISO-8859-1 —
+    // decodificar como UTF-8 quebraria os acentos (vira "�"). Lemos os
+    // bytes crus e escolhemos o decodificador pela declaração do XML.
+    const bytes = await resp.arrayBuffer();
+    const espiada = new TextDecoder("utf-8").decode(bytes.slice(0, 200));
+    const eLatin1 = /encoding=["']?(iso-8859-1|windows-1252)/i.test(espiada);
+    const xml = new TextDecoder(eLatin1 ? "iso-8859-1" : "utf-8").decode(bytes);
 
     const partes = xml.split(/<item[\s>]/i).slice(1);
     const itens: ItemAgregado[] = [];
