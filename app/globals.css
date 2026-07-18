@@ -175,6 +175,50 @@ body {
 }
 
 /* ==================================================================
+ * prose-legal — texto corrido das páginas de Privacidade e Termos
+ * ------------------------------------------------------------------
+ * Como essas páginas têm muito texto (parágrafos, subtítulos, listas),
+ * definimos o espaçamento e as cores UMA vez aqui, em vez de repetir
+ * classe do Tailwind em cada linha. Vale só dentro de <div class="prose-legal">.
+ * ================================================================== */
+.prose-legal {
+  color: var(--text-dim);
+  line-height: 1.7;
+  font-size: 0.95rem;
+}
+.prose-legal p {
+  margin-bottom: 1rem;
+}
+.prose-legal h2 {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--text);
+  margin-top: 2rem;
+  margin-bottom: 0.6rem;
+}
+.prose-legal ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.prose-legal strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.prose-legal a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-legal a:hover {
+  filter: brightness(1.2);
+}
+
+/* ==================================================================
  * Etapa "Centro de Comando" — cromo de HUD (painel de controle) do
  * feed. Tudo aqui embaixo serve pra fazer o feed parecer um console
  * de telemetria de missão espacial, não um blog. Ver

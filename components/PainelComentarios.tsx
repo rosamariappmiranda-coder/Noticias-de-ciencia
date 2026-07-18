@@ -16,6 +16,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { criarClienteNavegador } from "@/lib/supabase/client";
+import { moderarComentario } from "@/lib/moderacao";
 import { IconeCoracao, IconeExcluir } from "./Icones";
 
 type Comentario = {
@@ -339,30 +340,50 @@ function FormularioComentario({
   compacto?: boolean;
 }) {
   const [texto, setTexto] = useState("");
+  // Guarda a mensagem de "seu comentário não passou" (moderação), pra
+  // mostrar embaixo do campo. `null` = nenhum erro no momento.
+  const [erro, setErro] = useState<string | null>(null);
 
   function submeter(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!texto.trim()) return;
+    // Passa o texto pelo porteiro ANTES de enviar. Se não passar,
+    // mostra o motivo e não manda nada pro banco.
+    const resultado = moderarComentario(texto);
+    if (!resultado.ok) {
+      setErro(resultado.motivo);
+      return;
+    }
+    setErro(null);
     aoEnviar(texto);
     setTexto("");
   }
 
   return (
-    <form onSubmit={submeter} className="flex gap-2">
-      <input
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        placeholder={placeholder}
-        className="font-body flex-1 rounded-full bg-white/5 px-4 py-2 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-dim)] focus:bg-white/10"
-      />
-      <button
-        type="submit"
-        className={`rounded-full bg-[var(--accent)] font-medium text-black transition active:scale-90 ${
-          compacto ? "px-4 py-2 text-xs" : "px-5 py-2 text-sm"
-        }`}
-      >
-        Enviar
-      </button>
+    <form onSubmit={submeter} className="flex flex-col gap-1.5">
+      <div className="flex gap-2">
+        <input
+          value={texto}
+          onChange={(e) => {
+            setTexto(e.target.value);
+            if (erro) setErro(null); // limpa o aviso assim que a pessoa corrige
+          }}
+          placeholder={placeholder}
+          className="font-body flex-1 rounded-full bg-white/5 px-4 py-2 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-dim)] focus:bg-white/10"
+        />
+        <button
+          type="submit"
+          className={`rounded-full bg-[var(--accent)] font-medium text-black transition active:scale-90 ${
+            compacto ? "px-4 py-2 text-xs" : "px-5 py-2 text-sm"
+          }`}
+        >
+          Enviar
+        </button>
+      </div>
+      {erro && (
+        <p className="px-4 text-xs text-red-300" role="alert">
+          {erro}
+        </p>
+      )}
     </form>
   );
 }

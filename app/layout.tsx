@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import GrainOverlay from "@/components/GrainOverlay";
 import BarraNav from "@/components/BarraNav";
+import Rodape from "@/components/Rodape";
 import "./globals.css";
 
 // Etapa "Feed Reels" (12/07/2026): o SmoothScrollProvider (Lenis)
@@ -63,6 +64,10 @@ export default function RootLayout({
         className={`${spaceGrotesk.variable} ${inter.variable} antialiased`}
       >
         {children}
+
+        {/* Rodapé com a marca e os links legais (Privacidade e Termos).
+            Fica no fim do fluxo da página, logo depois de todo o feed. */}
+        <Rodape />
 
         {/* Navbar de vidro fixa no topo em todas as páginas: a marca à
             esquerda e a área do usuário (Entrar / avatar + Sair) à
