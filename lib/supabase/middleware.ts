@@ -15,12 +15,13 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { urlSupabase, chaveSupabase } from "./env";
 
 export async function atualizarSessao(request: NextRequest) {
   let resposta = NextResponse.next({ request });
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const chave = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = urlSupabase();
+  const chave = chaveSupabase();
 
   // BLINDAGEM: se por algum motivo as variáveis de ambiente não
   // estiverem disponíveis (ex.: build sem as chaves), NÃO derrubamos o
