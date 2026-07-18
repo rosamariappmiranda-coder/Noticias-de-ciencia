@@ -16,20 +16,30 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { sair } from "@/app/login/actions";
 
 export default async function BarraUsuario() {
-  const supabase = await criarClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  // BLINDAGEM: como este componente fica na navbar de TODAS as páginas,
+  // uma falha aqui derrubaria o site inteiro. Então envolvemos a
+  // consulta ao Supabase num try/catch: se algo der errado (ex.: chaves
+  // de ambiente ausentes), tratamos como "visitante deslogado" e o site
+  // abre normalmente, em vez de estourar erro 500.
+  let user: { id: string; email?: string | null } | null = null;
   let nome: string | null = null;
-  if (user) {
-    const { data: perfil } = await supabase
-      .from("profiles")
-      .select("nome")
-      .eq("id", user.id)
-      .single();
-    // Cai pro email se o nome ainda não estiver preenchido.
-    nome = perfil?.nome ?? user.email ?? null;
+
+  try {
+    const supabase = await criarClienteServidor();
+    const resposta = await supabase.auth.getUser();
+    user = resposta.data.user;
+
+    if (user) {
+      const { data: perfil } = await supabase
+        .from("profiles")
+        .select("nome")
+        .eq("id", user.id)
+        .single();
+      // Cai pro email se o nome ainda não estiver preenchido.
+      nome = perfil?.nome ?? user.email ?? null;
+    }
+  } catch (erro) {
+    console.error("BarraUsuario: falha ao ler sessão, tratando como deslogado:", erro);
   }
 
   // Vive DENTRO da BarraNav (navbar de vidro) — sem posicionamento

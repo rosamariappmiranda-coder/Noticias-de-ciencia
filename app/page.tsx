@@ -23,35 +23,43 @@ import type { Categoria } from "@/content/noticias";
 // SmoothScrollProvider religa o Lenis (scroll suave) que o projeto
 // original desativou ao virar feed Reels — aqui ele é essencial.
 export default async function Home() {
-  // Descobre quem está logado e quais notícias essa pessoa já curtiu/
-  // salvou — tudo no servidor, protegido pela segurança RLS. Assim o
-  // feed já vem com os botões no estado certo, sem "piscar".
-  const supabase = await criarClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // BLINDAGEM: toda a leitura do Supabase abaixo vai dentro de try/catch.
+  // Se as chaves de ambiente faltarem ou o banco estiver fora do ar, a
+  // home NÃO pode estourar erro 500 — ela cai pras notícias fixas e trata
+  // a pessoa como visitante deslogado. O feed é público, então funciona.
+  let user: { id: string; email?: string | null } | null = null;
+  let agregadas: NoticiaFeed[] = [];
+
+  try {
+    // Descobre quem está logado e busca as notícias do BANCO (agregadas
+    // pelo robô, frescas da web) — tudo no servidor, protegido pela RLS.
+    const supabase = await criarClienteServidor();
+    user = (await supabase.auth.getUser()).data.user;
+
+    const { data: doBanco } = await supabase
+      .from("noticias")
+      .select("slug, categoria, manchete, resumo, imagem, url_fonte, fonte_nome, data_iso")
+      .order("data_iso", { ascending: false })
+      .limit(120);
+
+    agregadas = (doBanco ?? []).map((n) => ({
+      slug: n.slug,
+      categoria: n.categoria as Categoria,
+      manchete: n.manchete,
+      resumo: n.resumo,
+      imagem: n.imagem,
+      dataISO: n.data_iso,
+      fonteNome: n.fonte_nome,
+      urlFonte: n.url_fonte,
+    }));
+  } catch (erro) {
+    console.error("Home: falha ao carregar do Supabase, usando só notícias fixas:", erro);
+  }
 
   // ------------------------------------------------------------
-  // MONTA O CARDÁPIO DO FEED: notícias do BANCO (agregadas pelo robô,
-  // frescas da web) + as escritas à mão (content/noticias.ts).
+  // MONTA O CARDÁPIO DO FEED: notícias do banco (se vieram) + as
+  // escritas à mão (content/noticias.ts, sempre disponíveis).
   // ------------------------------------------------------------
-  const { data: doBanco } = await supabase
-    .from("noticias")
-    .select("slug, categoria, manchete, resumo, imagem, url_fonte, fonte_nome, data_iso")
-    .order("data_iso", { ascending: false })
-    .limit(120);
-
-  const agregadas: NoticiaFeed[] = (doBanco ?? []).map((n) => ({
-    slug: n.slug,
-    categoria: n.categoria as Categoria,
-    manchete: n.manchete,
-    resumo: n.resumo,
-    imagem: n.imagem,
-    dataISO: n.data_iso,
-    fonteNome: n.fonte_nome,
-    urlFonte: n.url_fonte,
-  }));
-
   const escritas: NoticiaFeed[] = noticias.map((n) => ({
     slug: n.slug,
     categoria: n.categoria,
@@ -77,35 +85,41 @@ export default async function Home() {
   const sinais: SinalInteracao[] = []; // "combustível" do algoritmo
 
   if (user) {
-    // Curtidas, salvos e VISUALIZAÇÕES (tempo de atenção): viram
-    // estado inicial dos botões e sinais do algoritmo.
-    const { data: inter } = await supabase
-      .from("interacoes")
-      .select("noticia_slug, categoria, tipo, created_at")
-      .eq("user_id", user.id)
-      .in("tipo", ["curtida", "salvo", "visualizacao"]);
-    for (const linha of inter ?? []) {
-      if (linha.tipo === "curtida") curtidasSlugs.push(linha.noticia_slug);
-      else if (linha.tipo === "salvo") salvosSlugs.push(linha.noticia_slug);
-      sinais.push({
-        categoria: linha.categoria,
-        tipo: linha.tipo,
-        quando: linha.created_at,
-      });
-    }
+    try {
+      const supabase = await criarClienteServidor();
 
-    // Comentários também são sinais (fortes) de interesse. A categoria
-    // vem da própria notícia comentada.
-    const categoriaPorSlug = new Map(cardapio.map((n) => [n.slug, n.categoria]));
-    const { data: coms } = await supabase
-      .from("comentarios")
-      .select("noticia_slug, created_at")
-      .eq("user_id", user.id);
-    for (const c of coms ?? []) {
-      const categoria = categoriaPorSlug.get(c.noticia_slug);
-      if (categoria) {
-        sinais.push({ categoria, tipo: "comentario", quando: c.created_at });
+      // Curtidas, salvos e VISUALIZAÇÕES (tempo de atenção): viram
+      // estado inicial dos botões e sinais do algoritmo.
+      const { data: inter } = await supabase
+        .from("interacoes")
+        .select("noticia_slug, categoria, tipo, created_at")
+        .eq("user_id", user.id)
+        .in("tipo", ["curtida", "salvo", "visualizacao"]);
+      for (const linha of inter ?? []) {
+        if (linha.tipo === "curtida") curtidasSlugs.push(linha.noticia_slug);
+        else if (linha.tipo === "salvo") salvosSlugs.push(linha.noticia_slug);
+        sinais.push({
+          categoria: linha.categoria,
+          tipo: linha.tipo,
+          quando: linha.created_at,
+        });
       }
+
+      // Comentários também são sinais (fortes) de interesse. A categoria
+      // vem da própria notícia comentada.
+      const categoriaPorSlug = new Map(cardapio.map((n) => [n.slug, n.categoria]));
+      const { data: coms } = await supabase
+        .from("comentarios")
+        .select("noticia_slug, created_at")
+        .eq("user_id", user.id);
+      for (const c of coms ?? []) {
+        const categoria = categoriaPorSlug.get(c.noticia_slug);
+        if (categoria) {
+          sinais.push({ categoria, tipo: "comentario", quando: c.created_at });
+        }
+      }
+    } catch (erro) {
+      console.error("Home: falha ao carregar sinais do usuário:", erro);
     }
   }
 
