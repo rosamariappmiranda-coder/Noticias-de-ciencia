@@ -42,6 +42,13 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+// O site inteiro é DINÂMICO: toda página checa o login (cookies) na
+// navbar e o feed é personalizado por usuário. Por isso pedimos ao Next
+// pra NÃO tentar gerar páginas estáticas ("congeladas") no build — cada
+// visita é renderizada na hora, no servidor. Isso elimina os erros
+// DYNAMIC_SERVER_USAGE que quebravam o build na Vercel.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "NEXO — seu feed de conhecimento",
   description:
