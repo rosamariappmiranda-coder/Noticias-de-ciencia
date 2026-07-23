@@ -47,26 +47,19 @@ alimentar o `RadarTendencias` com assuntos mais específicos quando quisermos.
 
 ## Armadilhas conhecidas
 
-**OneDrive × Next.js — NÃO RESOLVIDO.** O projeto mora no OneDrive, que converte
-os arquivos de build em atalhos de nuvem (confirmado: `ReparsePoint = True`).
-O Next.js não consegue lê-los e o `npm run build` falha com
-`EINVAL: invalid argument, readlink`.
+**OneDrive × Next.js — RESOLVIDO em 2026-07-23 movendo o projeto para fora do
+OneDrive.** Local canônico agora: `C:\Users\rosam\projetos\noticias-da-ciencia`.
+Sempre trabalhar aqui. A cópia antiga em
+`OneDrive\Documentos\Rosa Maria - Criação de Conteúdo\noticias-da-ciencia` é só
+backup — não editar (diverge do canônico).
 
-Padrão: o **primeiro** build depois de apagar a pasta funciona; do segundo em
-diante falha. Contorno imediato: `rm -rf .next` antes de buildar.
-
-Três tentativas de correção via `next.config.ts` **falharam** — não repetir:
-1. `distDir: ".next-local"` + `attrib +P` → o build recria a pasta e perde a fixação
-2. `attrib +P` na pasta do projeto inteira → arquivos novos não herdam
-3. `distDir: "../../../../nexo-build"` → quebra a resolução de tipos do TypeScript
-
-A causa é o projeto estar **dentro** do OneDrive; consertar pelo config é a
-camada errada. Solução real: mover o projeto para fora do OneDrive (ex.:
-`C:\Users\rosam\projetos\`) ou excluir a pasta da sincronização no app do
-OneDrive.
-
-**Não bloqueia o deploy:** a Vercel builda no ambiente dela, sem OneDrive, e o
-`npm run dev` funciona normalmente.
+Histórico do diagnóstico (para não repetir): o OneDrive convertia os arquivos
+de build em atalhos de nuvem (`ReparsePoint = True`), e o Next falhava com
+`EINVAL: readlink` do segundo build em diante. **Cinco** tentativas de consertar
+mantendo o projeto no OneDrive falharam — `distDir` externo e junctions quebram
+a resolução de módulos do Node (jsx-runtime não encontrado, ou duas cópias de
+React → `useContext` null). A única solução real é o projeto viver fora do
+OneDrive, feito. Não tentar remendar de novo.
 
 **Lenis × scroll-snap.** O `SmoothScrollProvider` (Lenis) briga com scroll-snap
 nativo. Os dois não convivem — escolher um.
