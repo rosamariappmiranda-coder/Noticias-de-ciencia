@@ -4,8 +4,7 @@ import HeroHelix from "@/components/HeroHelix";
 import FeedNoticias from "@/components/FeedNoticias";
 import BarraProgresso from "@/components/BarraProgresso";
 import FundoAurora from "@/components/FundoAurora";
-import RadarTendencias from "@/components/RadarTendencias";
-import { extrairTendencias } from "@/lib/tendencias";
+import EmAlta24h from "@/components/EmAlta24h";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { noticias } from "@/content/noticias";
 import { ordenarFeed, type SinalInteracao } from "@/lib/algoritmo-feed";
@@ -154,9 +153,6 @@ export default async function Home() {
   // frescor — mais recentes primeiro).
   const feedOrdenado = ordenarFeed(cardapio, sinais);
 
-  // O RADAR: assuntos mais cobertos pelas fontes agregadas agora.
-  const tendencias = extrairTendencias(cardapio);
-
   return (
     <SmoothScrollProvider>
       {/* Âncora do topo (o botão "decolar de novo" do fim do feed
@@ -178,9 +174,10 @@ export default async function Home() {
           revelar o feed diretamente. */}
       <HeroHelix />
 
-      {/* O radar: ranking do que está sendo mais coberto agora, com os
-          portais que estão falando de cada assunto. */}
-      <RadarTendencias tendencias={tendencias} />
+      {/* Descoberta: os assuntos de ciência e tecnologia em alta AGORA
+          na web brasileira, curados para deixar fora guerra, política
+          e celebridade. Cada item leva à matéria na fonte. */}
+      <EmAlta24h />
 
       {/* O feed de notícias (já ordenado pelo algoritmo) abaixo do hero. */}
       <FeedNoticias

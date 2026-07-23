@@ -92,6 +92,16 @@ const TERMOS_RUINS = [
   "futebol", "jogador", "campeonato", "gol ", "escalação",
   "promoção", "cupom", "black friday", "desconto", "oferta",
   "apostas", "loteria", "mega-sena",
+  // Guerra e conflito — a diretriz do produto exclui explicitamente.
+  // Entram por causa de "drone", "satélite militar", "míssil hipersônico".
+  "guerra", "míssil", "mísseis", "bombardei", "ataque a", "tropas",
+  "invasão", "ucrânia", "rússia invade", "gaza", "israel bombardeia",
+  "morteiro", "exército", "combatentes", "reféns",
+  // Política partidária — também excluída. Ciência de política pública
+  // (ex.: financiamento de pesquisa) passa; briga partidária não.
+  "eleição", "eleições", "presidente lula", "bolsonaro", "deputad",
+  "senador", "senado aprova", "câmara aprova", "ministro do stf",
+  "partido", "campanha eleitoral", "urna", "impeachment",
 ];
 
 /**
