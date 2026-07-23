@@ -14,6 +14,7 @@
 
 import type { NoticiaFeed } from "@/lib/tipos-feed";
 import NoticiaImersiva from "./NoticiaImersiva";
+import ListaEspera from "./ListaEspera";
 
 export default function FeedNoticias({
   noticias,
@@ -63,9 +64,14 @@ export default function FeedNoticias({
           Amanhã tem descoberta nova, tendência nova e polêmica nova.
           A ciência não dorme — e o seu feed também não.
         </p>
+
+        {/* Captura da newsletter: aqui é o pico de atenção — a pessoa
+            zerou o feed e quer mais. Melhor ponto para converter. */}
+        <ListaEspera />
+
         <a
           href="#topo"
-          className="botao-gradiente mt-8 rounded-full px-7 py-3 text-sm font-medium"
+          className="botao-gradiente mt-10 rounded-full px-7 py-3 text-sm font-medium"
         >
           Decolar de novo
         </a>
