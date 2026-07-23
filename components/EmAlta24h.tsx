@@ -43,11 +43,6 @@ export default async function EmAlta24h() {
             O que a web descobriu hoje
           </h2>
         </div>
-        <p className="font-telemetry hidden text-right text-[10px] leading-relaxed text-[var(--text-dim)] uppercase sm:block">
-          ciência e tecnologia
-          <br />
-          atualizado automaticamente
-        </p>
       </div>
 
       {/* Lista de assuntos. Cada linha é um link para a fonte. */}
@@ -95,10 +90,6 @@ export default async function EmAlta24h() {
           </li>
         ))}
       </ol>
-
-      <p className="font-telemetry mt-8 text-center text-[10px] tracking-[0.15em] text-[var(--text-dim)] uppercase">
-        curadoria automática · sem guerra, política ou celebridade
-      </p>
     </section>
   );
 }
