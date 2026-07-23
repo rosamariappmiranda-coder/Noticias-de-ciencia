@@ -20,11 +20,15 @@ export default function FeedNoticias({
   usuarioId,
   curtidasSlugs,
   salvosSlugs,
+  curtidasPorSlug,
 }: {
   noticias: NoticiaFeed[]; // já vem ORDENADO pelo algoritmo (ver app/page.tsx)
   usuarioId: string | null;
   curtidasSlugs: string[]; // slugs que o usuário já curtiu
   salvosSlugs: string[]; // slugs que o usuário já salvou
+  // Quantas curtidas REAIS cada notícia tem, contadas na tabela
+  // `interacoes`. Slug que ninguém curtiu simplesmente não aparece aqui.
+  curtidasPorSlug: Record<string, number>;
 }) {
   return (
     <div className="relative z-10">
@@ -39,6 +43,9 @@ export default function FeedNoticias({
           usuarioId={usuarioId}
           curtidaInicial={curtidasSlugs.includes(noticia.slug)}
           salvoInicial={salvosSlugs.includes(noticia.slug)}
+          // ?? 0 porque notícia que ninguém curtiu não aparece no mapa —
+          // e nesse caso o número simplesmente não é exibido.
+          curtidasReais={curtidasPorSlug[noticia.slug] ?? 0}
         />
       ))}
 

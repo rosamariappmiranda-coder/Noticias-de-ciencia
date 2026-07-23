@@ -90,22 +90,30 @@ function formatarData(dataISO: string): string {
   });
 }
 
-// Gera um número de curtidas "de mentirinha" porém ESTÁVEL a partir do
-// índice — só pra dar vida ao feed enquanto não há banco de dados real.
-// (Mesmo índice sempre gera o mesmo número, então não "pula" a cada
-// renderização.)
-function curtidasIniciais(indice: number): number {
-  return 120 + ((indice * 137) % 880);
+// A notícia saiu nas últimas 24 horas? Sinal de novidade REAL, checável
+// por qualquer pessoa que clique no link da fonte — ao contrário do
+// "explorando agora" que existia aqui antes.
+function ehRecente(dataISO: string): boolean {
+  const publicada = new Date(dataISO);
+  if (Number.isNaN(publicada.getTime())) return false;
+
+  const umDiaEmMs = 24 * 60 * 60 * 1000;
+  return Date.now() - publicada.getTime() < umDiaEmMs;
 }
 
-// "Prova social": quantas pessoas estão explorando esta notícia agora.
-// Número estável derivado do slug (não pisca a cada render) — quando o
-// site tiver tráfego real, trocamos por presença de verdade.
-function exploradoresAgora(slug: string): number {
-  let h = 0;
-  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) | 0;
-  return 40 + ((h >>> 0) % 460);
-}
+// NOTA (22/07/2026): aqui existiam duas funções que INVENTAVAM números —
+// `curtidasIniciais` gerava de 120 a 999 curtidas a partir do índice, e
+// `exploradoresAgora` gerava de 40 a 499 "pessoas explorando agora" a
+// partir do slug. Foram removidas.
+//
+// Por quê: o site está no ar num domínio próprio, e aqueles números
+// apareciam para leitores reais como prova social verdadeira. O banco
+// tinha 3 curtidas no total enquanto a tela mostrava centenas por card.
+// Para um portal de ciência, cuja moeda é ser confiável, isso é um risco
+// que não compensa o ganho estético.
+//
+// Agora a contagem vem da tabela `interacoes` e só aparece quando existe
+// de verdade (ver `curtidasReais` nas propriedades abaixo).
 
 // Quem NÃO está logado pode curtir até este limite; da próxima em diante,
 // o "porteiro" pede login. A contagem fica guardada no próprio navegador
@@ -142,12 +150,14 @@ export default function NoticiaImersiva({
   usuarioId,
   curtidaInicial,
   salvoInicial,
+  curtidasReais,
 }: {
   noticia: NoticiaFeed;
   indice: number;
   usuarioId: string | null; // id do usuário logado, ou null se anônimo
   curtidaInicial: boolean; // já curtiu esta notícia? (vem do banco)
   salvoInicial: boolean; // já salvou esta notícia? (vem do banco)
+  curtidasReais: number; // quantas curtidas esta notícia REALMENTE tem
 }) {
   const secaoRef = useRef<HTMLElement>(null);
   const camadaCursorRef = useRef<HTMLDivElement>(null); // recebe a inclinação do mouse
@@ -168,7 +178,11 @@ export default function NoticiaImersiva({
     null
   );
 
-  const curtidas = curtidasIniciais(indice) + (curtiu ? 1 : 0);
+  // Contagem REAL vinda do banco, mais a curtida da própria pessoa se ela
+  // acabou de clicar (assim o número responde na hora, sem esperar o
+  // servidor). `curtidaInicial` já está embutida em curtidasReais, então
+  // só somamos a diferença — senão a curtida dela contaria duas vezes.
+  const curtidas = curtidasReais + (curtiu ? 1 : 0) - (curtidaInicial ? 1 : 0);
 
   // Cliente Supabase do navegador — criado só uma vez. É por ele que
   // gravamos/apagamos as interações (a segurança RLS garante que cada
@@ -522,16 +536,23 @@ export default function NoticiaImersiva({
             {noticia.resumo}
           </p>
 
-          {/* Prova social (pessoas aqui agora) + crédito da fonte — o
-              crédito com link é o que torna o modelo agregador legal. */}
+          {/* Crédito da fonte — com link, é o que torna o modelo de
+              agregador legítimo. (Aqui antes havia um "N explorando
+              agora" gerado por fórmula; saiu junto com os outros
+              números falsos.) */}
           <div className="font-telemetry mt-3.5 flex flex-wrap items-center gap-4 text-[10px] tracking-[0.15em] text-[var(--text-dim)] uppercase">
-            <span className="flex items-center gap-1.5">
-              <span
-                className="pulso-sinal inline-block h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: cor }}
-              />
-              {exploradoresAgora(noticia.slug)} explorando agora
-            </span>
+            {/* Selo de recém-publicada: sinal REAL de novidade, derivado
+                da data da matéria — substitui a falsa prova social com
+                algo que a leitora pode conferir. */}
+            {ehRecente(noticia.dataISO) && (
+              <span className="flex items-center gap-1.5">
+                <span
+                  className="pulso-sinal inline-block h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: cor }}
+                />
+                publicada hoje
+              </span>
+            )}
             {noticia.fonteNome && noticia.urlFonte && (
               <a
                 href={noticia.urlFonte}
@@ -564,7 +585,14 @@ export default function NoticiaImersiva({
               cheio={curtiu}
               className={curtiu ? "text-[var(--accent)]" : ""}
             />
-            <span className="font-telemetry tabular-nums">{curtidas}</span>
+            {/* Só mostra o número quando existe curtida de verdade. Um "0"
+                em todos os cards faria o feed parecer abandonado — e a
+                ausência de número não engana ninguém, ao contrário de um
+                número inventado. Quando o site tiver volume, os números
+                aparecem sozinhos. */}
+            {curtidas > 0 && (
+              <span className="font-telemetry tabular-nums">{curtidas}</span>
+            )}
           </button>
 
           {/* Comentar: abre/fecha o campo de comentário logo abaixo. */}

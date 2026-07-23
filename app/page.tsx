@@ -84,6 +84,33 @@ export default async function Home() {
   const salvosSlugs: string[] = [];
   const sinais: SinalInteracao[] = []; // "combustível" do algoritmo
 
+  // ------------------------------------------------------------
+  // CONTAGEM REAL de curtidas por notícia (para TODO mundo, logado
+  // ou não). Vem da visão `curtidas_por_noticia`, que devolve só
+  // slug + total — nunca quem curtiu.
+  //
+  // Precisa ser uma visão porque a política de segurança da tabela
+  // `interacoes` deixa cada pessoa ver apenas as próprias linhas.
+  // Consultar a tabela direto daqui traria só as curtidas de quem
+  // está logado, e zero para visitante.
+  // ------------------------------------------------------------
+  const curtidasPorSlug: Record<string, number> = {};
+
+  try {
+    const supabase = await criarClienteServidor();
+    const { data } = await supabase
+      .from("curtidas_por_noticia")
+      .select("noticia_slug, total");
+
+    for (const linha of data ?? []) {
+      curtidasPorSlug[linha.noticia_slug] = linha.total;
+    }
+  } catch (erro) {
+    // Blindagem: sem contagem o feed simplesmente não mostra número.
+    // Melhor um card sem contador do que a home inteira fora do ar.
+    console.error("Home: falha ao contar curtidas:", erro);
+  }
+
   if (user) {
     try {
       const supabase = await criarClienteServidor();
@@ -161,6 +188,7 @@ export default async function Home() {
         usuarioId={user?.id ?? null}
         curtidasSlugs={curtidasSlugs}
         salvosSlugs={salvosSlugs}
+        curtidasPorSlug={curtidasPorSlug}
       />
     </SmoothScrollProvider>
   );
